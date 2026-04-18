@@ -1,15 +1,37 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Trophy, Target, BarChart3 } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+
+const TOTAL_GROUP_MATCHES = 48;
 
 const Index = () => {
   const { user } = useAuth();
+  const [completed, setCompleted] = useState<number | null>(null);
 
   useEffect(() => {
     document.title = "Inicio | Prode Mundial 2026";
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    const load = async () => {
+      const { count } = await supabase
+        .from("predictions")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id);
+      setCompleted(count ?? 0);
+    };
+    load();
+  }, [user]);
+
+  const done = completed ?? 0;
+  const percent = Math.round((done / TOTAL_GROUP_MATCHES) * 100);
 
   return (
     <AppLayout>
@@ -39,9 +61,22 @@ const Index = () => {
                 <Target className="h-5 w-5 text-primary" />
               </div>
               <CardTitle className="text-base">Mi Predicción</CardTitle>
-              <CardDescription>Próximamente: cargá tus pronósticos partido a partido.</CardDescription>
+              <CardDescription>Fase de grupos del Mundial 2026.</CardDescription>
             </CardHeader>
-            <CardContent />
+            <CardContent className="space-y-3">
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">
+                  Predicciones de grupos completadas:{" "}
+                  <span className="font-semibold text-foreground">
+                    {done} de {TOTAL_GROUP_MATCHES}
+                  </span>
+                </p>
+                <Progress value={percent} className="h-2" />
+              </div>
+              <Button asChild size="sm" className="w-full sm:w-auto">
+                <Link to="/prediccion">Cargar predicciones</Link>
+              </Button>
+            </CardContent>
           </Card>
 
           <Card className="shadow-card">
