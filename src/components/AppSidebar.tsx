@@ -1,5 +1,6 @@
 import { Trophy, Target, BarChart3, Shield, LogOut } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -14,12 +15,12 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
-const items = [
+const baseItems = [
   { title: "Inicio", url: "/", icon: Trophy },
   { title: "Mi Predicción", url: "/prediccion", icon: Target },
   { title: "Ranking", url: "/ranking", icon: BarChart3 },
-  { title: "Admin", url: "/admin", icon: Shield },
 ];
 
 export function AppSidebar() {
@@ -27,6 +28,21 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const location = useLocation();
   const { signOut, user } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (!user) return setIsAdmin(false);
+    supabase
+      .from("profiles")
+      .select("is_admin")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => setIsAdmin(!!data?.is_admin));
+  }, [user]);
+
+  const items = isAdmin
+    ? [...baseItems, { title: "Admin", url: "/admin", icon: Shield }]
+    : baseItems;
 
   const isActive = (path: string) =>
     path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
