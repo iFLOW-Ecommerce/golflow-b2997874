@@ -34,7 +34,7 @@ const Index = () => {
           .order("total_points", { ascending: false }),
       ]);
       setCompleted(count ?? 0);
-      const rows = (ranking.data ?? []) as Array<{ user_id: string; total_points: number }>;
+      const rows = ((ranking.data ?? []) as unknown) as Array<{ user_id: string; total_points: number }>;
       const idx = rows.findIndex((r) => r.user_id === user.id);
       if (idx >= 0) {
         setMyPosition(idx + 1);
