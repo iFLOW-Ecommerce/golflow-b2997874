@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Target, Loader2, Save } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Target, Loader2, Check } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,10 +25,12 @@ const GROUPS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
 const Prediccion = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState<string | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
   const [inputs, setInputs] = useState<Record<string, ScoreInput>>({});
   const [savedKeys, setSavedKeys] = useState<Set<string>>(new Set());
+  const [statusByMatch, setStatusByMatch] = useState<Record<string, "saving" | "saved" | "error">>({});
+  const timersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const savedTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   useEffect(() => {
     document.title = "Mi Predicción | Prode Mundial 2026";
@@ -41,10 +43,11 @@ const Prediccion = () => {
       const [matchesRes, predsRes] = await Promise.all([
         supabase
           .from("matches")
-          .select("id, group_name, home_team, away_team, match_date")
+          .select("id, group_name, home_team, away_team, match_date, created_at")
           .eq("stage", "group")
           .order("group_name", { ascending: true })
-          .order("match_date", { ascending: true }),
+          .order("created_at", { ascending: true })
+          .order("id", { ascending: true }),
         supabase
           .from("predictions")
           .select("match_id, predicted_home_score, predicted_away_score")
@@ -84,24 +87,16 @@ const Prediccion = () => {
 
   const completedCount = savedKeys.size;
 
-  const handleChange = (matchId: string, side: "home" | "away", value: string) => {
-    if (value !== "" && !/^\d{1,2}$/.test(value)) return;
-    setInputs((prev) => ({
-      ...prev,
-      [matchId]: { home: prev[matchId]?.home ?? "", away: prev[matchId]?.away ?? "", [side]: value },
-    }));
-  };
+  useEffect(() => {
+    return () => {
+      Object.values(timersRef.current).forEach(clearTimeout);
+      Object.values(savedTimersRef.current).forEach(clearTimeout);
+    };
+  }, []);
 
-  const handleSave = async (matchId: string) => {
+  const persist = async (matchId: string, home: number, away: number) => {
     if (!user) return;
-    const v = inputs[matchId];
-    const home = Number(v?.home);
-    const away = Number(v?.away);
-    if (!Number.isInteger(home) || !Number.isInteger(away) || home < 0 || away < 0) {
-      toast.error("Ingresá un resultado válido");
-      return;
-    }
-    setSaving(matchId);
+    setStatusByMatch((s) => ({ ...s, [matchId]: "saving" }));
     const { error } = await supabase
       .from("predictions")
       .upsert(
@@ -113,13 +108,61 @@ const Prediccion = () => {
         },
         { onConflict: "user_id,match_id" },
       );
-    setSaving(null);
     if (error) {
-      toast.error("No se pudo guardar la predicción");
+      setStatusByMatch((s) => ({ ...s, [matchId]: "error" }));
+      toast.error("No se pudo guardar");
       return;
     }
-    setSavedKeys((prev) => new Set(prev).add(matchId));
-    toast.success("Predicción guardada");
+    setSavedKeys((prev) => {
+      if (prev.has(matchId)) return prev;
+      const next = new Set(prev);
+      next.add(matchId);
+      return next;
+    });
+    setStatusByMatch((s) => ({ ...s, [matchId]: "saved" }));
+    if (savedTimersRef.current[matchId]) clearTimeout(savedTimersRef.current[matchId]);
+    savedTimersRef.current[matchId] = setTimeout(() => {
+      setStatusByMatch((s) => {
+        if (s[matchId] !== "saved") return s;
+        const { [matchId]: _, ...rest } = s;
+        return rest;
+      });
+    }, 1500);
+  };
+
+  const scheduleSave = (matchId: string, home: string, away: string) => {
+    if (timersRef.current[matchId]) clearTimeout(timersRef.current[matchId]);
+    if (home === "" || away === "") return;
+    const h = Number(home);
+    const a = Number(away);
+    if (!Number.isInteger(h) || !Number.isInteger(a) || h < 0 || a < 0) return;
+    timersRef.current[matchId] = setTimeout(() => {
+      persist(matchId, h, a);
+    }, 700);
+  };
+
+  const handleChange = (matchId: string, side: "home" | "away", value: string) => {
+    if (value !== "" && !/^\d{1,2}$/.test(value)) return;
+    setInputs((prev) => {
+      const current = prev[matchId] ?? { home: "", away: "" };
+      const next = { ...current, [side]: value };
+      scheduleSave(matchId, next.home, next.away);
+      return { ...prev, [matchId]: next };
+    });
+  };
+
+  const handleBlur = (matchId: string) => {
+    const v = inputs[matchId];
+    if (!v) return;
+    if (v.home === "" || v.away === "") return;
+    if (timersRef.current[matchId]) {
+      clearTimeout(timersRef.current[matchId]);
+      delete timersRef.current[matchId];
+    }
+    const h = Number(v.home);
+    const a = Number(v.away);
+    if (!Number.isInteger(h) || !Number.isInteger(a) || h < 0 || a < 0) return;
+    persist(matchId, h, a);
   };
 
   return (
@@ -164,6 +207,7 @@ const Prediccion = () => {
                     {(grouped[g] ?? []).map((m) => {
                       const v = inputs[m.id] ?? { home: "", away: "" };
                       const isSaved = savedKeys.has(m.id);
+                      const status = statusByMatch[m.id];
                       return (
                         <div
                           key={m.id}
@@ -181,6 +225,7 @@ const Prediccion = () => {
                                   aria-label={`Goles ${m.home_team}`}
                                   value={v.home}
                                   onChange={(e) => handleChange(m.id, "home", e.target.value)}
+                                  onBlur={() => handleBlur(m.id)}
                                   className="w-12 h-10 text-center px-1"
                                 />
                                 <span className="text-muted-foreground text-sm">vs</span>
@@ -190,6 +235,7 @@ const Prediccion = () => {
                                   aria-label={`Goles ${m.away_team}`}
                                   value={v.away}
                                   onChange={(e) => handleChange(m.id, "away", e.target.value)}
+                                  onBlur={() => handleBlur(m.id)}
                                   className="w-12 h-10 text-center px-1"
                                 />
                               </div>
@@ -197,22 +243,24 @@ const Prediccion = () => {
                                 {m.away_team}
                               </span>
                             </div>
-                            <Button
-                              size="sm"
-                              onClick={() => handleSave(m.id)}
-                              disabled={saving === m.id || v.home === "" || v.away === ""}
-                              variant={isSaved ? "secondary" : "default"}
-                              className="sm:w-28"
-                            >
-                              {saving === m.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <>
-                                  <Save className="h-4 w-4 mr-1" />
-                                  {isSaved ? "Actualizar" : "Guardar"}
-                                </>
-                              )}
-                            </Button>
+                            <div className="flex items-center justify-end sm:w-28 text-xs text-muted-foreground min-h-[1.25rem]" aria-live="polite">
+                              {status === "saving" ? (
+                                <span className="flex items-center gap-1">
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                  Guardando...
+                                </span>
+                              ) : status === "saved" ? (
+                                <span className="flex items-center gap-1 text-primary">
+                                  <Check className="h-3 w-3" />
+                                  Guardado
+                                </span>
+                              ) : isSaved ? (
+                                <span className="flex items-center gap-1">
+                                  <Check className="h-3 w-3" />
+                                  Guardado
+                                </span>
+                              ) : null}
+                            </div>
                           </div>
                         </div>
                       );
