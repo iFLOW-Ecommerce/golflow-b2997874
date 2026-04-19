@@ -268,6 +268,29 @@ const Prediccion = () => {
                               ) : null}
                             </div>
                           </div>
+                          {(hasRealResult || hasPrediction) && (
+                            <div className="mt-2 pt-2 border-t text-xs sm:text-sm text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1">
+                              {hasPrediction && (
+                                <span>
+                                  Tu predicción:{" "}
+                                  <span className="font-semibold text-foreground">
+                                    {v.home}-{v.away}
+                                  </span>
+                                </span>
+                              )}
+                              {hasRealResult && (
+                                <>
+                                  <span className="text-muted-foreground/50">|</span>
+                                  <span>
+                                    Real:{" "}
+                                    <span className="font-semibold text-primary">
+                                      {m.home_score}-{m.away_score}
+                                    </span>
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          )}
                         </div>
                       );
                     })}
