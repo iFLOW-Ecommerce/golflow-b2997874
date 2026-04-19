@@ -16,6 +16,9 @@ type Match = {
   home_team: string;
   away_team: string;
   match_date: string;
+  home_score: number | null;
+  away_score: number | null;
+  is_finished: boolean;
 };
 
 type ScoreInput = { home: string; away: string };
@@ -43,7 +46,7 @@ const Prediccion = () => {
       const [matchesRes, predsRes] = await Promise.all([
         supabase
           .from("matches")
-          .select("id, group_name, home_team, away_team, match_date, created_at")
+          .select("id, group_name, home_team, away_team, match_date, created_at, home_score, away_score, is_finished")
           .eq("stage", "group")
           .order("group_name", { ascending: true })
           .order("created_at", { ascending: true })
@@ -208,6 +211,9 @@ const Prediccion = () => {
                       const v = inputs[m.id] ?? { home: "", away: "" };
                       const isSaved = savedKeys.has(m.id);
                       const status = statusByMatch[m.id];
+                      const hasRealResult =
+                        m.is_finished && m.home_score !== null && m.away_score !== null;
+                      const hasPrediction = v.home !== "" && v.away !== "";
                       return (
                         <div
                           key={m.id}
