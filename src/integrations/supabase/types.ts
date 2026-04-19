@@ -129,10 +129,26 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_ranking: {
+        Row: {
+          email: string | null
+          predictions_count: number | null
+          total_points: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
-      [_ in never]: never
+      calculate_prediction_points: {
+        Args: {
+          actual_away: number
+          actual_home: number
+          predicted_away: number
+          predicted_home: number
+        }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
