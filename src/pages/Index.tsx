@@ -13,6 +13,8 @@ const TOTAL_GROUP_MATCHES = 48;
 const Index = () => {
   const { user } = useAuth();
   const [completed, setCompleted] = useState<number | null>(null);
+  const [myPosition, setMyPosition] = useState<number | null>(null);
+  const [myPoints, setMyPoints] = useState<number>(0);
 
   useEffect(() => {
     document.title = "Inicio | Prode Mundial 2026";
@@ -21,11 +23,26 @@ const Index = () => {
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const { count } = await supabase
-        .from("predictions")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", user.id);
+      const [{ count }, ranking] = await Promise.all([
+        supabase
+          .from("predictions")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id),
+        supabase
+          .from("user_ranking" as any)
+          .select("user_id, total_points")
+          .order("total_points", { ascending: false }),
+      ]);
       setCompleted(count ?? 0);
+      const rows = (ranking.data ?? []) as Array<{ user_id: string; total_points: number }>;
+      const idx = rows.findIndex((r) => r.user_id === user.id);
+      if (idx >= 0) {
+        setMyPosition(idx + 1);
+        setMyPoints(rows[idx].total_points ?? 0);
+      } else {
+        setMyPosition(null);
+        setMyPoints(0);
+      }
     };
     load();
   }, [user]);
@@ -85,9 +102,17 @@ const Index = () => {
                 <BarChart3 className="h-5 w-5 text-primary" />
               </div>
               <CardTitle className="text-base">Ranking</CardTitle>
-              <CardDescription>Próximamente: mirá quién va arriba en el torneo.</CardDescription>
+              <CardDescription>
+                {myPosition
+                  ? `Tu posición actual: #${myPosition} con ${myPoints} puntos.`
+                  : "Aún no tenés posición en el ranking."}
+              </CardDescription>
             </CardHeader>
-            <CardContent />
+            <CardContent>
+              <Button asChild size="sm" variant="outline" className="w-full sm:w-auto">
+                <Link to="/ranking">Ver ranking</Link>
+              </Button>
+            </CardContent>
           </Card>
         </section>
       </div>
