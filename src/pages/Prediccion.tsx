@@ -251,6 +251,7 @@ const Prediccion = () => {
     const v = inputs[m.id] ?? { home: "", away: "" };
     const isSaved = savedKeys.has(m.id);
     const status = statusByMatch[m.id];
+    const locked = isLocked(m.match_date);
     const hasRealResult =
       m.is_finished && m.home_score !== null && m.away_score !== null;
     const hasPrediction = v.home !== "" && v.away !== "";
@@ -264,9 +265,14 @@ const Prediccion = () => {
           )
         : null;
     return (
-      <div key={m.id} className="rounded-lg border bg-card p-3 sm:p-4">
-        <div className="text-xs text-muted-foreground mb-2">
-          {formatDate(m.match_date)}
+      <div key={m.id} className={`rounded-lg border bg-card p-3 sm:p-4 ${locked ? "opacity-70" : ""}`}>
+        <div className="text-xs text-muted-foreground mb-2 flex items-center justify-between gap-2">
+          <span>{formatDate(m.match_date)} hs</span>
+          {locked && (
+            <span className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
+              Cerrado
+            </span>
+          )}
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="flex flex-1 items-center justify-between sm:justify-center gap-3 min-w-0">
@@ -281,7 +287,8 @@ const Prediccion = () => {
                 value={v.home}
                 onChange={(e) => handleChange(m.id, "home", e.target.value)}
                 onBlur={() => handleBlur(m.id)}
-                className="w-12 h-10 text-center px-1"
+                disabled={locked}
+                className="w-12 h-10 text-center px-1 disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-100"
               />
               <span className="text-muted-foreground text-sm">vs</span>
               <Input
@@ -291,7 +298,8 @@ const Prediccion = () => {
                 value={v.away}
                 onChange={(e) => handleChange(m.id, "away", e.target.value)}
                 onBlur={() => handleBlur(m.id)}
-                className="w-12 h-10 text-center px-1"
+                disabled={locked}
+                className="w-12 h-10 text-center px-1 disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-100"
               />
             </div>
             <span className="text-sm sm:text-base font-medium truncate flex-1 sm:flex-initial sm:w-40">
