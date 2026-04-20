@@ -12,6 +12,7 @@ import { toast } from "sonner";
 
 type Match = {
   id: string;
+  stage: string;
   group_name: string | null;
   home_team: string;
   away_team: string;
@@ -24,6 +25,28 @@ type Match = {
 type ScoreInput = { home: string; away: string };
 
 const GROUPS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
+
+const KO_STAGES: { key: string; label: string }[] = [
+  { key: "round_of_32", label: "Dieciseisavos" },
+  { key: "round_of_16", label: "Octavos" },
+  { key: "quarterfinal", label: "Cuartos" },
+  { key: "semifinal", label: "Semifinales" },
+  { key: "third_place", label: "Tercer puesto" },
+  { key: "final", label: "Final" },
+];
+
+const formatDate = (iso: string) => {
+  try {
+    return new Date(iso).toLocaleDateString("es-AR", {
+      day: "2-digit",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return iso;
+  }
+};
 
 const Prediccion = () => {
   const { user } = useAuth();
@@ -46,9 +69,8 @@ const Prediccion = () => {
       const [matchesRes, predsRes] = await Promise.all([
         supabase
           .from("matches")
-          .select("id, group_name, home_team, away_team, match_date, created_at, home_score, away_score, is_finished")
-          .eq("stage", "group")
-          .order("group_name", { ascending: true })
+          .select("id, stage, group_name, home_team, away_team, match_date, created_at, home_score, away_score, is_finished")
+          .order("match_date", { ascending: true })
           .order("created_at", { ascending: true })
           .order("id", { ascending: true }),
         supabase
@@ -60,7 +82,7 @@ const Prediccion = () => {
       if (matchesRes.error) {
         toast.error("Error al cargar partidos");
       } else {
-        setMatches(matchesRes.data ?? []);
+        setMatches((matchesRes.data ?? []) as Match[]);
       }
 
       const initial: Record<string, ScoreInput> = {};
@@ -79,16 +101,41 @@ const Prediccion = () => {
     load();
   }, [user]);
 
+  const groupMatches = useMemo(
+    () => matches.filter((m) => m.stage === "group"),
+    [matches],
+  );
+
+  const koMatches = useMemo(
+    () => matches.filter((m) => m.stage !== "group"),
+    [matches],
+  );
+
   const grouped = useMemo(() => {
     const map: Record<string, Match[]> = {};
-    matches.forEach((m) => {
+    groupMatches.forEach((m) => {
       const g = m.group_name ?? "?";
       (map[g] ||= []).push(m);
     });
+    // Ensure stable order within each group by created_at via initial sort
+    for (const g of Object.keys(map)) {
+      map[g].sort((a, b) => a.match_date.localeCompare(b.match_date));
+    }
     return map;
-  }, [matches]);
+  }, [groupMatches]);
 
-  const completedCount = savedKeys.size;
+  const koByStage = useMemo(() => {
+    const map: Record<string, Match[]> = {};
+    koMatches.forEach((m) => {
+      (map[m.stage] ||= []).push(m);
+    });
+    return map;
+  }, [koMatches]);
+
+  const completedGroups = useMemo(
+    () => groupMatches.filter((m) => savedKeys.has(m.id)).length,
+    [groupMatches, savedKeys],
+  );
 
   useEffect(() => {
     return () => {
@@ -168,6 +215,96 @@ const Prediccion = () => {
     persist(matchId, h, a);
   };
 
+  const renderMatchRow = (m: Match, opts?: { showDate?: boolean }) => {
+    const v = inputs[m.id] ?? { home: "", away: "" };
+    const isSaved = savedKeys.has(m.id);
+    const status = statusByMatch[m.id];
+    const hasRealResult =
+      m.is_finished && m.home_score !== null && m.away_score !== null;
+    const hasPrediction = v.home !== "" && v.away !== "";
+    return (
+      <div key={m.id} className="rounded-lg border bg-card p-3 sm:p-4">
+        {opts?.showDate && (
+          <div className="text-xs text-muted-foreground mb-2">
+            {formatDate(m.match_date)}
+          </div>
+        )}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex flex-1 items-center justify-between sm:justify-center gap-3 min-w-0">
+            <span className="text-sm sm:text-base font-medium truncate text-right flex-1 sm:flex-initial sm:w-40">
+              {m.home_team}
+            </span>
+            <div className="flex items-center gap-1 shrink-0">
+              <Input
+                type="text"
+                inputMode="numeric"
+                aria-label={`Goles ${m.home_team}`}
+                value={v.home}
+                onChange={(e) => handleChange(m.id, "home", e.target.value)}
+                onBlur={() => handleBlur(m.id)}
+                className="w-12 h-10 text-center px-1"
+              />
+              <span className="text-muted-foreground text-sm">vs</span>
+              <Input
+                type="text"
+                inputMode="numeric"
+                aria-label={`Goles ${m.away_team}`}
+                value={v.away}
+                onChange={(e) => handleChange(m.id, "away", e.target.value)}
+                onBlur={() => handleBlur(m.id)}
+                className="w-12 h-10 text-center px-1"
+              />
+            </div>
+            <span className="text-sm sm:text-base font-medium truncate flex-1 sm:flex-initial sm:w-40">
+              {m.away_team}
+            </span>
+          </div>
+          <div className="flex items-center justify-end sm:w-28 text-xs text-muted-foreground min-h-[1.25rem]" aria-live="polite">
+            {status === "saving" ? (
+              <span className="flex items-center gap-1">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Guardando...
+              </span>
+            ) : status === "saved" ? (
+              <span className="flex items-center gap-1 text-primary">
+                <Check className="h-3 w-3" />
+                Guardado
+              </span>
+            ) : isSaved ? (
+              <span className="flex items-center gap-1">
+                <Check className="h-3 w-3" />
+                Guardado
+              </span>
+            ) : null}
+          </div>
+        </div>
+        {(hasRealResult || hasPrediction) && (
+          <div className="mt-2 pt-2 border-t text-xs sm:text-sm text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1">
+            {hasPrediction && (
+              <span>
+                Tu predicción:{" "}
+                <span className="font-semibold text-foreground">
+                  {v.home}-{v.away}
+                </span>
+              </span>
+            )}
+            {hasRealResult && (
+              <>
+                <span className="text-muted-foreground/50">|</span>
+                <span>
+                  Real:{" "}
+                  <span className="font-semibold text-primary">
+                    {m.home_score}-{m.away_score}
+                  </span>
+                </span>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <AppLayout>
       <div className="max-w-4xl mx-auto space-y-6">
@@ -178,11 +315,11 @@ const Prediccion = () => {
             </div>
             <div>
               <h1 className="text-2xl font-bold tracking-tight">Mi Predicción</h1>
-              <p className="text-sm text-muted-foreground">Fase de grupos · Mundial 2026</p>
+              <p className="text-sm text-muted-foreground">Mundial 2026</p>
             </div>
           </div>
           <Badge variant="secondary" className="text-sm">
-            {completedCount}/48
+            {completedGroups}/48 grupos
           </Badge>
         </header>
 
@@ -191,113 +328,53 @@ const Prediccion = () => {
             <Loader2 className="h-5 w-5 animate-spin mr-2" /> Cargando partidos...
           </div>
         ) : (
-          <Tabs defaultValue="A" className="w-full">
-            <TabsList className="flex flex-wrap h-auto justify-start gap-1 bg-muted p-1">
-              {GROUPS.map((g) => (
-                <TabsTrigger key={g} value={g} className="px-3 py-1.5 text-sm">
-                  Grupo {g}
-                </TabsTrigger>
-              ))}
+          <Tabs defaultValue="grupos" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="grupos">Fase de grupos</TabsTrigger>
+              <TabsTrigger value="eliminatorias">Eliminatorias</TabsTrigger>
             </TabsList>
 
-            {GROUPS.map((g) => (
-              <TabsContent key={g} value={g} className="mt-4">
-                <Card className="shadow-card">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg">Grupo {g}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {(grouped[g] ?? []).map((m) => {
-                      const v = inputs[m.id] ?? { home: "", away: "" };
-                      const isSaved = savedKeys.has(m.id);
-                      const status = statusByMatch[m.id];
-                      const hasRealResult =
-                        m.is_finished && m.home_score !== null && m.away_score !== null;
-                      const hasPrediction = v.home !== "" && v.away !== "";
-                      return (
-                        <div
-                          key={m.id}
-                          className="rounded-lg border bg-card p-3 sm:p-4"
-                        >
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                            <div className="flex flex-1 items-center justify-between sm:justify-center gap-3 min-w-0">
-                              <span className="text-sm sm:text-base font-medium truncate text-right flex-1 sm:flex-initial sm:w-40">
-                                {m.home_team}
-                              </span>
-                              <div className="flex items-center gap-1 shrink-0">
-                                <Input
-                                  type="text"
-                                  inputMode="numeric"
-                                  aria-label={`Goles ${m.home_team}`}
-                                  value={v.home}
-                                  onChange={(e) => handleChange(m.id, "home", e.target.value)}
-                                  onBlur={() => handleBlur(m.id)}
-                                  className="w-12 h-10 text-center px-1"
-                                />
-                                <span className="text-muted-foreground text-sm">vs</span>
-                                <Input
-                                  type="text"
-                                  inputMode="numeric"
-                                  aria-label={`Goles ${m.away_team}`}
-                                  value={v.away}
-                                  onChange={(e) => handleChange(m.id, "away", e.target.value)}
-                                  onBlur={() => handleBlur(m.id)}
-                                  className="w-12 h-10 text-center px-1"
-                                />
-                              </div>
-                              <span className="text-sm sm:text-base font-medium truncate flex-1 sm:flex-initial sm:w-40">
-                                {m.away_team}
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-end sm:w-28 text-xs text-muted-foreground min-h-[1.25rem]" aria-live="polite">
-                              {status === "saving" ? (
-                                <span className="flex items-center gap-1">
-                                  <Loader2 className="h-3 w-3 animate-spin" />
-                                  Guardando...
-                                </span>
-                              ) : status === "saved" ? (
-                                <span className="flex items-center gap-1 text-primary">
-                                  <Check className="h-3 w-3" />
-                                  Guardado
-                                </span>
-                              ) : isSaved ? (
-                                <span className="flex items-center gap-1">
-                                  <Check className="h-3 w-3" />
-                                  Guardado
-                                </span>
-                              ) : null}
-                            </div>
-                          </div>
-                          {(hasRealResult || hasPrediction) && (
-                            <div className="mt-2 pt-2 border-t text-xs sm:text-sm text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1">
-                              {hasPrediction && (
-                                <span>
-                                  Tu predicción:{" "}
-                                  <span className="font-semibold text-foreground">
-                                    {v.home}-{v.away}
-                                  </span>
-                                </span>
-                              )}
-                              {hasRealResult && (
-                                <>
-                                  <span className="text-muted-foreground/50">|</span>
-                                  <span>
-                                    Real:{" "}
-                                    <span className="font-semibold text-primary">
-                                      {m.home_score}-{m.away_score}
-                                    </span>
-                                  </span>
-                                </>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            ))}
+            <TabsContent value="grupos" className="mt-4">
+              <Tabs defaultValue="A" className="w-full">
+                <TabsList className="flex flex-wrap h-auto justify-start gap-1 bg-muted p-1">
+                  {GROUPS.map((g) => (
+                    <TabsTrigger key={g} value={g} className="px-3 py-1.5 text-sm">
+                      Grupo {g}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+
+                {GROUPS.map((g) => (
+                  <TabsContent key={g} value={g} className="mt-4">
+                    <Card className="shadow-card">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-lg">Grupo {g}</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        {(grouped[g] ?? []).map((m) => renderMatchRow(m))}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                ))}
+              </Tabs>
+            </TabsContent>
+
+            <TabsContent value="eliminatorias" className="mt-4 space-y-4">
+              {KO_STAGES.map((s) => {
+                const list = koByStage[s.key] ?? [];
+                if (list.length === 0) return null;
+                return (
+                  <Card key={s.key} className="shadow-card">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg">{s.label}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {list.map((m) => renderMatchRow(m, { showDate: true }))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </TabsContent>
           </Tabs>
         )}
       </div>
