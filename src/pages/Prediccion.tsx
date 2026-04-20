@@ -22,7 +22,7 @@ type Match = {
   is_finished: boolean;
 };
 
-type ScoreInput = { home: string; away: string };
+type ScoreInput = { home: string; away: string; points?: number };
 
 const GROUPS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
 
@@ -75,7 +75,7 @@ const Prediccion = () => {
           .order("id", { ascending: true }),
         supabase
           .from("predictions")
-          .select("match_id, predicted_home_score, predicted_away_score")
+          .select("match_id, predicted_home_score, predicted_away_score, points_awarded")
           .eq("user_id", user.id),
       ]);
 
@@ -91,6 +91,7 @@ const Prediccion = () => {
         initial[p.match_id] = {
           home: String(p.predicted_home_score),
           away: String(p.predicted_away_score),
+          points: p.points_awarded ?? 0,
         };
         keys.add(p.match_id);
       });
