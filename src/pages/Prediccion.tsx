@@ -195,6 +195,8 @@ const Prediccion = () => {
     const h = Number(home);
     const a = Number(away);
     if (!Number.isInteger(h) || !Number.isInteger(a) || h < 0 || a < 0) return;
+    const m = matches.find((x) => x.id === matchId);
+    if (m && isLocked(m.match_date)) return;
     timersRef.current[matchId] = setTimeout(() => {
       persist(matchId, h, a);
     }, 700);
@@ -202,6 +204,8 @@ const Prediccion = () => {
 
   const handleChange = (matchId: string, side: "home" | "away", value: string) => {
     if (value !== "" && !/^\d{1,2}$/.test(value)) return;
+    const m = matches.find((x) => x.id === matchId);
+    if (m && isLocked(m.match_date)) return;
     setInputs((prev) => {
       const current = prev[matchId] ?? { home: "", away: "" };
       const next = { ...current, [side]: value };
@@ -214,6 +218,8 @@ const Prediccion = () => {
     const v = inputs[matchId];
     if (!v) return;
     if (v.home === "" || v.away === "") return;
+    const m = matches.find((x) => x.id === matchId);
+    if (m && isLocked(m.match_date)) return;
     if (timersRef.current[matchId]) {
       clearTimeout(timersRef.current[matchId]);
       delete timersRef.current[matchId];
