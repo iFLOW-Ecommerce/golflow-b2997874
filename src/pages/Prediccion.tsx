@@ -37,15 +37,23 @@ const KO_STAGES: { key: string; label: string }[] = [
 
 const formatDate = (iso: string) => {
   try {
-    return new Date(iso).toLocaleDateString("es-AR", {
+    return new Date(iso).toLocaleString("es-AR", {
       day: "2-digit",
       month: "short",
       hour: "2-digit",
       minute: "2-digit",
+      hour12: false,
     });
   } catch {
     return iso;
   }
+};
+
+const LOCK_MS = 60 * 60 * 1000;
+const isLocked = (iso: string) => {
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return false;
+  return Date.now() >= t - LOCK_MS;
 };
 
 const Prediccion = () => {
