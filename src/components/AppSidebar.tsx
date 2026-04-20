@@ -1,6 +1,7 @@
 import { Trophy, Target, BarChart3, Shield, LogOut } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
+import logo from "@/assets/logo.png";
 import {
   Sidebar,
   SidebarContent,
@@ -51,8 +52,8 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border px-4 py-4">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary">
-            <Trophy className="h-4 w-4 text-sidebar-primary-foreground" />
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-background overflow-hidden">
+            <img src={logo} alt="Prode Mundial 2026" className="h-9 w-9 object-contain" />
           </div>
           {!collapsed && (
             <div className="min-w-0">

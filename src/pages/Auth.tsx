@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Trophy } from "lucide-react";
+import logo from "@/assets/logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -79,8 +79,8 @@ const Auth = () => {
     <main className="min-h-screen flex items-center justify-center px-4 py-8 bg-background">
       <div className="w-full max-w-md space-y-6">
         <header className="text-center space-y-3">
-          <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl shadow-elegant" style={{ background: "var(--gradient-hero)" }}>
-            <Trophy className="h-8 w-8 text-primary-foreground" />
+          <div className="inline-flex h-20 w-20 items-center justify-center rounded-2xl shadow-elegant bg-card border border-border overflow-hidden">
+            <img src={logo} alt="Prode Mundial 2026" className="h-20 w-20 object-contain" />
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
             Prode Mundial 2026
