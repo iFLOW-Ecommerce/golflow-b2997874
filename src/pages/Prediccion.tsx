@@ -216,20 +216,50 @@ const Prediccion = () => {
     persist(matchId, h, a);
   };
 
-  const renderMatchRow = (m: Match, opts?: { showDate?: boolean }) => {
+  const computePointsBreakdown = (
+    ph: number,
+    pa: number,
+    ah: number,
+    aw: number,
+  ): { total: number; parts: string[] } => {
+    const parts: string[] = [];
+    let total = 0;
+    const po = ph > pa ? "home" : ph < pa ? "away" : "draw";
+    const ao = ah > aw ? "home" : ah < aw ? "away" : "draw";
+    if (po === ao) {
+      total += 3;
+      parts.push("3 por acertar resultado");
+    }
+    if (ph === ah && pa === aw) {
+      const totalGoals = ah + aw;
+      const bonus = totalGoals <= 1 ? 3 : 3 + (totalGoals - 1);
+      total += bonus;
+      parts.push(`${bonus} por acertar marcador exacto`);
+    }
+    return { total, parts };
+  };
+
+  const renderMatchRow = (m: Match) => {
     const v = inputs[m.id] ?? { home: "", away: "" };
     const isSaved = savedKeys.has(m.id);
     const status = statusByMatch[m.id];
     const hasRealResult =
       m.is_finished && m.home_score !== null && m.away_score !== null;
     const hasPrediction = v.home !== "" && v.away !== "";
+    const breakdown =
+      hasRealResult && hasPrediction
+        ? computePointsBreakdown(
+            Number(v.home),
+            Number(v.away),
+            m.home_score as number,
+            m.away_score as number,
+          )
+        : null;
     return (
       <div key={m.id} className="rounded-lg border bg-card p-3 sm:p-4">
-        {opts?.showDate && (
-          <div className="text-xs text-muted-foreground mb-2">
-            {formatDate(m.match_date)}
-          </div>
-        )}
+        <div className="text-xs text-muted-foreground mb-2">
+          {formatDate(m.match_date)}
+        </div>
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="flex flex-1 items-center justify-between sm:justify-center gap-3 min-w-0">
             <span className="text-sm sm:text-base font-medium truncate text-right flex-1 sm:flex-initial sm:w-40">
@@ -280,25 +310,41 @@ const Prediccion = () => {
           </div>
         </div>
         {(hasRealResult || hasPrediction) && (
-          <div className="mt-2 pt-2 border-t text-xs sm:text-sm text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1">
-            {hasPrediction && (
-              <span>
-                Tu predicción:{" "}
-                <span className="font-semibold text-foreground">
-                  {v.home}-{v.away}
-                </span>
-              </span>
-            )}
-            {hasRealResult && (
-              <>
-                <span className="text-muted-foreground/50">|</span>
+          <div className="mt-2 pt-2 border-t text-xs sm:text-sm text-muted-foreground space-y-1">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              {hasPrediction && (
                 <span>
-                  Real:{" "}
-                  <span className="font-semibold text-primary">
-                    {m.home_score}-{m.away_score}
+                  Tu predicción:{" "}
+                  <span className="font-semibold text-foreground">
+                    {v.home}-{v.away}
                   </span>
                 </span>
-              </>
+              )}
+              {hasRealResult && (
+                <>
+                  <span className="text-muted-foreground/50">|</span>
+                  <span>
+                    Real:{" "}
+                    <span className="font-semibold text-primary">
+                      {m.home_score}-{m.away_score}
+                    </span>
+                  </span>
+                </>
+              )}
+            </div>
+            {breakdown && (
+              <div>
+                Puntos:{" "}
+                <span className="font-semibold text-foreground">
+                  {breakdown.total}
+                </span>
+                {breakdown.parts.length > 0 && (
+                  <span className="text-muted-foreground">
+                    {" "}
+                    ({breakdown.parts.join(" + ")})
+                  </span>
+                )}
+              </div>
             )}
           </div>
         )}
