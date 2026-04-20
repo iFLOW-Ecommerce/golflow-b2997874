@@ -65,9 +65,15 @@ const Prediccion = () => {
   const [statusByMatch, setStatusByMatch] = useState<Record<string, "saving" | "saved" | "error">>({});
   const timersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const savedTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const [, setNowTick] = useState(0);
 
   useEffect(() => {
     document.title = "Mi Predicción | Prode Mundial 2026";
+  }, []);
+
+  useEffect(() => {
+    const id = setInterval(() => setNowTick((t) => t + 1), 30_000);
+    return () => clearInterval(id);
   }, []);
 
   useEffect(() => {
