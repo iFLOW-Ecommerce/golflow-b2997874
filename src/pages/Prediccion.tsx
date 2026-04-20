@@ -37,15 +37,23 @@ const KO_STAGES: { key: string; label: string }[] = [
 
 const formatDate = (iso: string) => {
   try {
-    return new Date(iso).toLocaleDateString("es-AR", {
+    return new Date(iso).toLocaleString("es-AR", {
       day: "2-digit",
       month: "short",
       hour: "2-digit",
       minute: "2-digit",
+      hour12: false,
     });
   } catch {
     return iso;
   }
+};
+
+const LOCK_MS = 60 * 60 * 1000;
+const isLocked = (iso: string) => {
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return false;
+  return Date.now() >= t - LOCK_MS;
 };
 
 const Prediccion = () => {
@@ -57,9 +65,15 @@ const Prediccion = () => {
   const [statusByMatch, setStatusByMatch] = useState<Record<string, "saving" | "saved" | "error">>({});
   const timersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const savedTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const [, setNowTick] = useState(0);
 
   useEffect(() => {
     document.title = "Mi Predicción | Prode Mundial 2026";
+  }, []);
+
+  useEffect(() => {
+    const id = setInterval(() => setNowTick((t) => t + 1), 30_000);
+    return () => clearInterval(id);
   }, []);
 
   useEffect(() => {
@@ -187,6 +201,8 @@ const Prediccion = () => {
     const h = Number(home);
     const a = Number(away);
     if (!Number.isInteger(h) || !Number.isInteger(a) || h < 0 || a < 0) return;
+    const m = matches.find((x) => x.id === matchId);
+    if (m && isLocked(m.match_date)) return;
     timersRef.current[matchId] = setTimeout(() => {
       persist(matchId, h, a);
     }, 700);
@@ -194,6 +210,8 @@ const Prediccion = () => {
 
   const handleChange = (matchId: string, side: "home" | "away", value: string) => {
     if (value !== "" && !/^\d{1,2}$/.test(value)) return;
+    const m = matches.find((x) => x.id === matchId);
+    if (m && isLocked(m.match_date)) return;
     setInputs((prev) => {
       const current = prev[matchId] ?? { home: "", away: "" };
       const next = { ...current, [side]: value };
@@ -206,6 +224,8 @@ const Prediccion = () => {
     const v = inputs[matchId];
     if (!v) return;
     if (v.home === "" || v.away === "") return;
+    const m = matches.find((x) => x.id === matchId);
+    if (m && isLocked(m.match_date)) return;
     if (timersRef.current[matchId]) {
       clearTimeout(timersRef.current[matchId]);
       delete timersRef.current[matchId];
@@ -243,6 +263,7 @@ const Prediccion = () => {
     const v = inputs[m.id] ?? { home: "", away: "" };
     const isSaved = savedKeys.has(m.id);
     const status = statusByMatch[m.id];
+    const locked = isLocked(m.match_date);
     const hasRealResult =
       m.is_finished && m.home_score !== null && m.away_score !== null;
     const hasPrediction = v.home !== "" && v.away !== "";
@@ -256,9 +277,14 @@ const Prediccion = () => {
           )
         : null;
     return (
-      <div key={m.id} className="rounded-lg border bg-card p-3 sm:p-4">
-        <div className="text-xs text-muted-foreground mb-2">
-          {formatDate(m.match_date)}
+      <div key={m.id} className={`rounded-lg border bg-card p-3 sm:p-4 ${locked ? "opacity-70" : ""}`}>
+        <div className="text-xs text-muted-foreground mb-2 flex items-center justify-between gap-2">
+          <span>{formatDate(m.match_date)} hs</span>
+          {locked && (
+            <span className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
+              Cerrado
+            </span>
+          )}
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="flex flex-1 items-center justify-between sm:justify-center gap-3 min-w-0">
@@ -273,7 +299,8 @@ const Prediccion = () => {
                 value={v.home}
                 onChange={(e) => handleChange(m.id, "home", e.target.value)}
                 onBlur={() => handleBlur(m.id)}
-                className="w-12 h-10 text-center px-1"
+                disabled={locked}
+                className="w-12 h-10 text-center px-1 disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-100"
               />
               <span className="text-muted-foreground text-sm">vs</span>
               <Input
@@ -283,7 +310,8 @@ const Prediccion = () => {
                 value={v.away}
                 onChange={(e) => handleChange(m.id, "away", e.target.value)}
                 onBlur={() => handleBlur(m.id)}
-                className="w-12 h-10 text-center px-1"
+                disabled={locked}
+                className="w-12 h-10 text-center px-1 disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-100"
               />
             </div>
             <span className="text-sm sm:text-base font-medium truncate flex-1 sm:flex-initial sm:w-40">
