@@ -416,7 +416,7 @@ const Prediccion = () => {
                       <CardTitle className="text-lg">{s.label}</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                      {list.map((m) => renderMatchRow(m, { showDate: true }))}
+                      {list.map((m) => renderMatchRow(m))}
                     </CardContent>
                   </Card>
                 );
