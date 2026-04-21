@@ -9,6 +9,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
 const TOTAL_GROUP_MATCHES = 48;
+const TOTAL_KNOCKOUT_MATCHES = 31;
+const KNOCKOUT_STAGES = ["round_of_32", "round_of_16", "quarterfinal", "semifinal", "final"];
 
 type MatchRow = {
   id: string;
