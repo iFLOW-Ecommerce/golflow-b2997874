@@ -152,6 +152,11 @@ const Prediccion = () => {
     [groupMatches, savedKeys],
   );
 
+  const completedKO = useMemo(
+    () => koMatches.filter((m) => savedKeys.has(m.id)).length,
+    [koMatches, savedKeys],
+  );
+
   useEffect(() => {
     return () => {
       Object.values(timersRef.current).forEach(clearTimeout);
