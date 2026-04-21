@@ -61,11 +61,12 @@ const Index = () => {
     if (!user) return;
     const load = async () => {
       const nowIso = new Date().toISOString();
-      const [{ count }, ranking, upcomingRes, recentRes, predsRes] = await Promise.all([
+      const [{ count }, ranking, upcomingRes, recentRes, predsRes, koMatchesRes] = await Promise.all([
         supabase
           .from("predictions")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", user.id),
+          .select("id, matches!inner(stage)", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .eq("matches.stage", "group"),
         supabase
           .from("user_ranking" as any)
           .select("user_id, total_points")
@@ -87,6 +88,10 @@ const Index = () => {
           .from("predictions")
           .select("match_id, predicted_home_score, predicted_away_score, points_awarded")
           .eq("user_id", user.id),
+        supabase
+          .from("matches")
+          .select("id")
+          .in("stage", KNOCKOUT_STAGES),
       ]);
 
       setCompleted(count ?? 0);
