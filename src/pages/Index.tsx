@@ -9,6 +9,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
 const TOTAL_GROUP_MATCHES = 48;
+const TOTAL_KNOCKOUT_MATCHES = 31;
+const KNOCKOUT_STAGES = ["round_of_32", "round_of_16", "quarterfinal", "semifinal", "final"];
 
 type MatchRow = {
   id: string;
@@ -44,6 +46,7 @@ const formatShortDate = (iso: string) => {
 const Index = () => {
   const { user } = useAuth();
   const [completed, setCompleted] = useState<number | null>(null);
+  const [completedKO, setCompletedKO] = useState<number | null>(null);
   const [myPosition, setMyPosition] = useState<number | null>(null);
   const [myPoints, setMyPoints] = useState<number>(0);
   const [upcoming, setUpcoming] = useState<MatchRow[]>([]);
@@ -58,11 +61,12 @@ const Index = () => {
     if (!user) return;
     const load = async () => {
       const nowIso = new Date().toISOString();
-      const [{ count }, ranking, upcomingRes, recentRes, predsRes] = await Promise.all([
+      const [{ count }, ranking, upcomingRes, recentRes, predsRes, koMatchesRes] = await Promise.all([
         supabase
           .from("predictions")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", user.id),
+          .select("id, matches!inner(stage)", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .eq("matches.stage", "group"),
         supabase
           .from("user_ranking" as any)
           .select("user_id, total_points")
@@ -84,9 +88,16 @@ const Index = () => {
           .from("predictions")
           .select("match_id, predicted_home_score, predicted_away_score, points_awarded")
           .eq("user_id", user.id),
+        supabase
+          .from("matches")
+          .select("id")
+          .in("stage", KNOCKOUT_STAGES),
       ]);
 
       setCompleted(count ?? 0);
+      const koIds = new Set(((koMatchesRes.data ?? []) as Array<{ id: string }>).map((m) => m.id));
+      const koCount = (predsRes.data ?? []).filter((p: any) => koIds.has(p.match_id)).length;
+      setCompletedKO(koCount);
       const rows = ((ranking.data ?? []) as unknown) as Array<{ user_id: string; total_points: number }>;
       const idx = rows.findIndex((r) => r.user_id === user.id);
       if (idx >= 0) {
@@ -112,6 +123,8 @@ const Index = () => {
 
   const done = completed ?? 0;
   const percent = Math.round((done / TOTAL_GROUP_MATCHES) * 100);
+  const doneKO = completedKO ?? 0;
+  const percentKO = Math.round((doneKO / TOTAL_KNOCKOUT_MATCHES) * 100);
 
   return (
     <AppLayout>
@@ -152,6 +165,15 @@ const Index = () => {
                   </span>
                 </p>
                 <Progress value={percent} className="h-2" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">
+                  Predicciones de eliminatorias completadas:{" "}
+                  <span className="font-semibold text-foreground">
+                    {doneKO} de {TOTAL_KNOCKOUT_MATCHES}
+                  </span>
+                </p>
+                <Progress value={percentKO} className="h-2" />
               </div>
               <Button asChild size="sm" className="w-full sm:w-auto">
                 <Link to="/prediccion">Cargar predicciones</Link>
