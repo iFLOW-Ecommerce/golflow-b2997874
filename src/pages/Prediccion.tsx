@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MultiplierBadge, getStageMultiplier } from "@/lib/multiplier";
+import { TeamName, stripFlagEmoji } from "@/lib/country-flag";
 
 type Match = {
   id: string;
