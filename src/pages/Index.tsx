@@ -216,7 +216,33 @@ const Index = () => {
                   : "Aún no tenés posición en el ranking."}
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-3">
+              {rankingWindow.length > 0 && (
+                <ul className="divide-y divide-border rounded-lg border bg-card overflow-hidden">
+                  {rankingWindow.map((r) => {
+                    const isMe = r.user_id === user?.id;
+                    const name = r.email ? r.email.split("@")[0] : "—";
+                    return (
+                      <li
+                        key={r.user_id}
+                        className={`flex items-center gap-3 px-3 py-2 text-sm ${
+                          isMe ? "bg-primary/10 border-l-2 border-l-primary font-semibold" : ""
+                        }`}
+                      >
+                        <span className="w-8 shrink-0 text-xs text-muted-foreground tabular-nums">
+                          #{r.position}
+                        </span>
+                        <span className="flex-1 min-w-0 truncate">{name}</span>
+                        <span className="shrink-0 text-xs tabular-nums">
+                          <span className={isMe ? "text-primary" : "text-muted-foreground"}>
+                            {r.total_points} pts
+                          </span>
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
               <Button asChild size="sm" variant="outline" className="w-full sm:w-auto">
                 <Link to="/ranking">Ver ranking</Link>
               </Button>
