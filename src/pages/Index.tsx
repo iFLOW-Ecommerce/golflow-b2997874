@@ -46,6 +46,7 @@ const formatShortDate = (iso: string) => {
 const Index = () => {
   const { user } = useAuth();
   const [completed, setCompleted] = useState<number | null>(null);
+  const [completedKO, setCompletedKO] = useState<number | null>(null);
   const [myPosition, setMyPosition] = useState<number | null>(null);
   const [myPoints, setMyPoints] = useState<number>(0);
   const [upcoming, setUpcoming] = useState<MatchRow[]>([]);
