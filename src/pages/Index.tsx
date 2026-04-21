@@ -123,6 +123,8 @@ const Index = () => {
 
   const done = completed ?? 0;
   const percent = Math.round((done / TOTAL_GROUP_MATCHES) * 100);
+  const doneKO = completedKO ?? 0;
+  const percentKO = Math.round((doneKO / TOTAL_KNOCKOUT_MATCHES) * 100);
 
   return (
     <AppLayout>
