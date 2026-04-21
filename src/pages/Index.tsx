@@ -72,7 +72,7 @@ const Index = () => {
           .eq("matches.stage", "group"),
         supabase
           .from("user_ranking" as any)
-          .select("user_id, total_points")
+          .select("user_id, email, total_points")
           .order("total_points", { ascending: false }),
         supabase
           .from("matches")
