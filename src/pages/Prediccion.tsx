@@ -398,9 +398,14 @@ const Prediccion = () => {
               <p className="text-sm text-muted-foreground">Mundial 2026</p>
             </div>
           </div>
-          <Badge variant="secondary" className="text-sm">
-            {completedGroups}/48 grupos
-          </Badge>
+          <div className="flex flex-col items-end gap-1">
+            <Badge variant="secondary" className="text-sm">
+              {completedGroups}/48 grupos
+            </Badge>
+            <Badge variant="secondary" className="text-sm">
+              {completedKO}/{koMatches.length || 31} eliminatorias
+            </Badge>
+          </div>
         </header>
 
         {loading ? (
