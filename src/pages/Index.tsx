@@ -166,6 +166,15 @@ const Index = () => {
                 </p>
                 <Progress value={percent} className="h-2" />
               </div>
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">
+                  Predicciones de eliminatorias completadas:{" "}
+                  <span className="font-semibold text-foreground">
+                    {doneKO} de {TOTAL_KNOCKOUT_MATCHES}
+                  </span>
+                </p>
+                <Progress value={percentKO} className="h-2" />
+              </div>
               <Button asChild size="sm" className="w-full sm:w-auto">
                 <Link to="/prediccion">Cargar predicciones</Link>
               </Button>
