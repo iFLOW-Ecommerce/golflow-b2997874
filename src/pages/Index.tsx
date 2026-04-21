@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { MultiplierBadge } from "@/lib/multiplier";
+import { TeamName } from "@/lib/country-flag";
 
 const TOTAL_GROUP_MATCHES = 48;
 const TOTAL_KNOCKOUT_MATCHES = 31;
@@ -275,10 +276,10 @@ const Index = () => {
                           {formatShortDate(m.match_date)}
                         </span>
                         <span className="flex-1 min-w-0 truncate flex items-center gap-2">
-                          <span className="truncate">
-                            <span className="font-medium">{m.home_team}</span>
-                            <span className="text-muted-foreground"> vs </span>
-                            <span className="font-medium">{m.away_team}</span>
+                          <span className="truncate inline-flex items-center gap-1.5">
+                            <TeamName name={m.home_team} />
+                            <span className="text-muted-foreground">vs</span>
+                            <TeamName name={m.away_team} />
                           </span>
                           <MultiplierBadge stage={m.stage} />
                         </span>
@@ -322,10 +323,10 @@ const Index = () => {
                           {formatShortDate(m.match_date)}
                         </span>
                         <span className="flex-1 min-w-0 truncate flex items-center gap-2">
-                          <span className="truncate">
-                            <span className="font-medium">{m.home_team}</span>
-                            <span className="text-muted-foreground"> vs </span>
-                            <span className="font-medium">{m.away_team}</span>
+                          <span className="truncate inline-flex items-center gap-1.5">
+                            <TeamName name={m.home_team} />
+                            <span className="text-muted-foreground">vs</span>
+                            <TeamName name={m.away_team} />
                           </span>
                           <MultiplierBadge stage={m.stage} />
                         </span>

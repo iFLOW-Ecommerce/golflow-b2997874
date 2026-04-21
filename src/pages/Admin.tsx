@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Save, ShieldAlert } from "lucide-react";
 import { MultiplierBadge } from "@/lib/multiplier";
+import { TeamName } from "@/lib/country-flag";
 
 interface Match {
   id: string;
@@ -272,7 +273,9 @@ const Admin = () => {
           {m.is_finished && <Badge variant="secondary" className="text-xs">✓</Badge>}
         </div>
         <div className="flex-1 grid grid-cols-[1fr_auto_1fr] items-center gap-2 min-w-0">
-          <span className="text-sm font-medium text-right truncate">{m.home_team}</span>
+          <span className="text-sm font-medium text-right truncate">
+            <TeamName name={m.home_team} flagSize={14} className="justify-end" />
+          </span>
           <div className="flex items-center gap-1">
             <Input
               type="text"
@@ -292,7 +295,9 @@ const Admin = () => {
               placeholder="-"
             />
           </div>
-          <span className="text-sm font-medium truncate">{m.away_team}</span>
+          <span className="text-sm font-medium truncate">
+            <TeamName name={m.away_team} flagSize={14} />
+          </span>
         </div>
       </div>
     );

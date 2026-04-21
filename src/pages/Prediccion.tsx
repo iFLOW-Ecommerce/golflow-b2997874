@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MultiplierBadge, getStageMultiplier } from "@/lib/multiplier";
+import { TeamName, stripFlagEmoji } from "@/lib/country-flag";
 
 type Match = {
   id: string;
@@ -301,13 +302,13 @@ const Prediccion = () => {
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="flex flex-1 items-center justify-between sm:justify-center gap-3 min-w-0">
             <span className="text-sm sm:text-base font-medium truncate text-right flex-1 sm:flex-initial sm:w-40">
-              {m.home_team}
+              <TeamName name={m.home_team} flagSize={16} className="justify-end" />
             </span>
             <div className="flex items-center gap-1 shrink-0">
               <Input
                 type="text"
                 inputMode="numeric"
-                aria-label={`Goles ${m.home_team}`}
+                aria-label={`Goles ${stripFlagEmoji(m.home_team)}`}
                 value={v.home}
                 onChange={(e) => handleChange(m.id, "home", e.target.value)}
                 onBlur={() => handleBlur(m.id)}
@@ -318,7 +319,7 @@ const Prediccion = () => {
               <Input
                 type="text"
                 inputMode="numeric"
-                aria-label={`Goles ${m.away_team}`}
+                aria-label={`Goles ${stripFlagEmoji(m.away_team)}`}
                 value={v.away}
                 onChange={(e) => handleChange(m.id, "away", e.target.value)}
                 onBlur={() => handleBlur(m.id)}
@@ -327,7 +328,7 @@ const Prediccion = () => {
               />
             </div>
             <span className="text-sm sm:text-base font-medium truncate flex-1 sm:flex-initial sm:w-40">
-              {m.away_team}
+              <TeamName name={m.away_team} flagSize={16} />
             </span>
           </div>
           <div className="flex items-center justify-end sm:w-28 text-xs text-muted-foreground min-h-[1.25rem]" aria-live="polite">
