@@ -51,6 +51,7 @@ const Index = () => {
   const [completedKO, setCompletedKO] = useState<number | null>(null);
   const [myPosition, setMyPosition] = useState<number | null>(null);
   const [myPoints, setMyPoints] = useState<number>(0);
+  const [rankingWindow, setRankingWindow] = useState<Array<{ position: number; user_id: string; email: string | null; total_points: number }>>([]);
   const [upcoming, setUpcoming] = useState<MatchRow[]>([]);
   const [recent, setRecent] = useState<MatchRow[]>([]);
   const [predsByMatch, setPredsByMatch] = useState<Record<string, PredRow>>({});
@@ -71,7 +72,7 @@ const Index = () => {
           .eq("matches.stage", "group"),
         supabase
           .from("user_ranking" as any)
-          .select("user_id, total_points")
+          .select("user_id, email, total_points")
           .order("total_points", { ascending: false }),
         supabase
           .from("matches")
@@ -100,14 +101,34 @@ const Index = () => {
       const koIds = new Set(((koMatchesRes.data ?? []) as Array<{ id: string }>).map((m) => m.id));
       const koCount = (predsRes.data ?? []).filter((p: any) => koIds.has(p.match_id)).length;
       setCompletedKO(koCount);
-      const rows = ((ranking.data ?? []) as unknown) as Array<{ user_id: string; total_points: number }>;
+      const rows = ((ranking.data ?? []) as unknown) as Array<{ user_id: string; email: string | null; total_points: number }>;
       const idx = rows.findIndex((r) => r.user_id === user.id);
       if (idx >= 0) {
         setMyPosition(idx + 1);
         setMyPoints(rows[idx].total_points ?? 0);
+
+        // Compute window of up to 5 rows around the user
+        let start = idx - 2;
+        let end = idx + 2;
+        if (start < 0) {
+          end += -start;
+          start = 0;
+        }
+        if (end > rows.length - 1) {
+          start = Math.max(0, start - (end - (rows.length - 1)));
+          end = rows.length - 1;
+        }
+        const windowRows = rows.slice(start, end + 1).map((r, i) => ({
+          position: start + i + 1,
+          user_id: r.user_id,
+          email: r.email,
+          total_points: r.total_points ?? 0,
+        }));
+        setRankingWindow(windowRows);
       } else {
         setMyPosition(null);
         setMyPoints(0);
+        setRankingWindow([]);
       }
 
       setUpcoming((upcomingRes.data ?? []) as MatchRow[]);
@@ -195,7 +216,33 @@ const Index = () => {
                   : "Aún no tenés posición en el ranking."}
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-3">
+              {rankingWindow.length > 0 && (
+                <ul className="divide-y divide-border rounded-lg border bg-card overflow-hidden">
+                  {rankingWindow.map((r) => {
+                    const isMe = r.user_id === user?.id;
+                    const name = r.email ? r.email.split("@")[0] : "—";
+                    return (
+                      <li
+                        key={r.user_id}
+                        className={`flex items-center gap-3 px-3 py-2 text-sm ${
+                          isMe ? "bg-primary/10 border-l-2 border-l-primary font-semibold" : ""
+                        }`}
+                      >
+                        <span className="w-8 shrink-0 text-xs text-muted-foreground tabular-nums">
+                          #{r.position}
+                        </span>
+                        <span className="flex-1 min-w-0 truncate">{name}</span>
+                        <span className="shrink-0 text-xs tabular-nums">
+                          <span className={isMe ? "text-primary" : "text-muted-foreground"}>
+                            {r.total_points} pts
+                          </span>
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
               <Button asChild size="sm" variant="outline" className="w-full sm:w-auto">
                 <Link to="/ranking">Ver ranking</Link>
               </Button>
