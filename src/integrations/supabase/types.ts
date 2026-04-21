@@ -149,6 +149,7 @@ export type Database = {
         }
         Returns: number
       }
+      stage_multiplier: { Args: { _stage: string }; Returns: number }
     }
     Enums: {
       [_ in never]: never

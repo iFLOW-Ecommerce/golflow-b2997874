@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { MultiplierBadge, getStageMultiplier } from "@/lib/multiplier";
 
 type Match = {
   id: string;
@@ -246,7 +247,8 @@ const Prediccion = () => {
     pa: number,
     ah: number,
     aw: number,
-  ): { total: number; parts: string[] } => {
+    stage: string,
+  ): { total: number; parts: string[]; multiplier: number } => {
     const parts: string[] = [];
     let total = 0;
     const po = ph > pa ? "home" : ph < pa ? "away" : "draw";
@@ -261,7 +263,8 @@ const Prediccion = () => {
       total += bonus;
       parts.push(`${bonus} por acertar marcador exacto`);
     }
-    return { total, parts };
+    const multiplier = getStageMultiplier(stage);
+    return { total: total * multiplier, parts, multiplier };
   };
 
   const renderMatchRow = (m: Match) => {
@@ -279,12 +282,16 @@ const Prediccion = () => {
             Number(v.away),
             m.home_score as number,
             m.away_score as number,
+            m.stage,
           )
         : null;
     return (
       <div key={m.id} className={`rounded-lg border bg-card p-3 sm:p-4 ${locked ? "opacity-70" : ""}`}>
         <div className="text-xs text-muted-foreground mb-2 flex items-center justify-between gap-2">
-          <span>{formatDate(m.match_date)} hs</span>
+          <div className="flex items-center gap-2">
+            <span>{formatDate(m.match_date)} hs</span>
+            <MultiplierBadge stage={m.stage} />
+          </div>
           {locked && (
             <span className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
               Cerrado
@@ -374,7 +381,8 @@ const Prediccion = () => {
                 {breakdown.parts.length > 0 && (
                   <span className="text-muted-foreground">
                     {" "}
-                    ({breakdown.parts.join(" + ")})
+                    ({breakdown.parts.join(" + ")}
+                    {breakdown.multiplier > 1 ? ` × ${breakdown.multiplier}` : ""})
                   </span>
                 )}
               </div>

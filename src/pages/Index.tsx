@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { MultiplierBadge } from "@/lib/multiplier";
 
 const TOTAL_GROUP_MATCHES = 48;
 const TOTAL_KNOCKOUT_MATCHES = 31;
@@ -14,6 +15,7 @@ const KNOCKOUT_STAGES = ["round_of_32", "round_of_16", "quarterfinal", "semifina
 
 type MatchRow = {
   id: string;
+  stage: string;
   home_team: string;
   away_team: string;
   match_date: string;
@@ -73,13 +75,13 @@ const Index = () => {
           .order("total_points", { ascending: false }),
         supabase
           .from("matches")
-          .select("id, home_team, away_team, match_date, home_score, away_score, is_finished")
+          .select("id, stage, home_team, away_team, match_date, home_score, away_score, is_finished")
           .gte("match_date", nowIso)
           .order("match_date", { ascending: true })
           .limit(5),
         supabase
           .from("matches")
-          .select("id, home_team, away_team, match_date, home_score, away_score, is_finished")
+          .select("id, stage, home_team, away_team, match_date, home_score, away_score, is_finished")
           .lt("match_date", nowIso)
           .eq("is_finished", true)
           .order("match_date", { ascending: false })
@@ -225,10 +227,13 @@ const Index = () => {
                         <span className="w-28 shrink-0 text-xs text-muted-foreground">
                           {formatShortDate(m.match_date)}
                         </span>
-                        <span className="flex-1 min-w-0 truncate">
-                          <span className="font-medium">{m.home_team}</span>
-                          <span className="text-muted-foreground"> vs </span>
-                          <span className="font-medium">{m.away_team}</span>
+                        <span className="flex-1 min-w-0 truncate flex items-center gap-2">
+                          <span className="truncate">
+                            <span className="font-medium">{m.home_team}</span>
+                            <span className="text-muted-foreground"> vs </span>
+                            <span className="font-medium">{m.away_team}</span>
+                          </span>
+                          <MultiplierBadge stage={m.stage} />
                         </span>
                         {pred ? (
                           <span className="shrink-0 text-xs text-muted-foreground">
@@ -269,10 +274,13 @@ const Index = () => {
                         <span className="w-28 shrink-0 text-xs text-muted-foreground">
                           {formatShortDate(m.match_date)}
                         </span>
-                        <span className="flex-1 min-w-0 truncate">
-                          <span className="font-medium">{m.home_team}</span>
-                          <span className="text-muted-foreground"> vs </span>
-                          <span className="font-medium">{m.away_team}</span>
+                        <span className="flex-1 min-w-0 truncate flex items-center gap-2">
+                          <span className="truncate">
+                            <span className="font-medium">{m.home_team}</span>
+                            <span className="text-muted-foreground"> vs </span>
+                            <span className="font-medium">{m.away_team}</span>
+                          </span>
+                          <MultiplierBadge stage={m.stage} />
                         </span>
                         <span className="shrink-0 text-xs text-muted-foreground">
                           Real:{" "}
