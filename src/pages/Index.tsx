@@ -51,6 +51,7 @@ const Index = () => {
   const [completedKO, setCompletedKO] = useState<number | null>(null);
   const [myPosition, setMyPosition] = useState<number | null>(null);
   const [myPoints, setMyPoints] = useState<number>(0);
+  const [rankingWindow, setRankingWindow] = useState<Array<{ position: number; user_id: string; email: string | null; total_points: number }>>([]);
   const [upcoming, setUpcoming] = useState<MatchRow[]>([]);
   const [recent, setRecent] = useState<MatchRow[]>([]);
   const [predsByMatch, setPredsByMatch] = useState<Record<string, PredRow>>({});
