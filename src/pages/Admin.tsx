@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Save, ShieldAlert } from "lucide-react";
+import { MultiplierBadge } from "@/lib/multiplier";
 
 interface Match {
   id: string;
@@ -258,10 +259,11 @@ const Admin = () => {
           isDirty ? "border-primary bg-primary/5" : "border-border bg-card"
         }`}
       >
-        <div className="flex items-center gap-2 min-w-0 sm:w-28">
+        <div className="flex items-center gap-2 min-w-0 sm:w-32">
           {m.group_name && (
             <Badge variant="outline" className="text-xs">{m.group_name}</Badge>
           )}
+          <MultiplierBadge stage={m.stage} />
           {opts?.showDate && (
             <span className="text-xs text-muted-foreground truncate">
               {formatDate(m.match_date)}
@@ -306,9 +308,12 @@ const Admin = () => {
           isDirty ? "border-primary bg-primary/5" : "border-border bg-card"
         }`}
       >
-        <span className="text-xs text-muted-foreground sm:w-28 truncate">
-          {formatDate(m.match_date)}
-        </span>
+        <div className="flex items-center gap-2 sm:w-32">
+          <span className="text-xs text-muted-foreground truncate">
+            {formatDate(m.match_date)}
+          </span>
+          <MultiplierBadge stage={m.stage} />
+        </div>
         <div className="flex-1 grid grid-cols-[1fr_auto_1fr] items-center gap-2 min-w-0">
           <Input
             value={d.home}

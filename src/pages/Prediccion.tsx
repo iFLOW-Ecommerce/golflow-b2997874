@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Target, Loader2, Check, Zap } from "lucide-react";
+import { Target, Loader2, Check } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { MultiplierBadge, getStageMultiplier } from "@/lib/multiplier";
 
 type Match = {
   id: string;
@@ -25,26 +26,6 @@ type Match = {
 type ScoreInput = { home: string; away: string; points?: number };
 
 const GROUPS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
-
-const STAGE_MULTIPLIER: Record<string, number> = {
-  round_of_16: 2,
-  quarterfinal: 3,
-  semifinal: 4,
-  third_place: 5,
-  final: 5,
-};
-
-const getMultiplier = (stage: string) => STAGE_MULTIPLIER[stage] ?? 1;
-
-const MultiplierBadge = ({ stage }: { stage: string }) => {
-  const mult = getMultiplier(stage);
-  if (mult <= 1) return null;
-  return (
-    <span className="inline-flex items-center gap-0.5 rounded-full bg-primary/10 text-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
-      <Zap className="h-3 w-3" fill="currentColor" />×{mult}
-    </span>
-  );
-};
 
 const KO_STAGES: { key: string; label: string }[] = [
   { key: "round_of_32", label: "Dieciseisavos" },
@@ -282,7 +263,7 @@ const Prediccion = () => {
       total += bonus;
       parts.push(`${bonus} por acertar marcador exacto`);
     }
-    const multiplier = getMultiplier(stage);
+    const multiplier = getStageMultiplier(stage);
     return { total: total * multiplier, parts, multiplier };
   };
 
