@@ -95,6 +95,9 @@ const Index = () => {
       ]);
 
       setCompleted(count ?? 0);
+      const koIds = new Set(((koMatchesRes.data ?? []) as Array<{ id: string }>).map((m) => m.id));
+      const koCount = (predsRes.data ?? []).filter((p: any) => koIds.has(p.match_id)).length;
+      setCompletedKO(koCount);
       const rows = ((ranking.data ?? []) as unknown) as Array<{ user_id: string; total_points: number }>;
       const idx = rows.findIndex((r) => r.user_id === user.id);
       if (idx >= 0) {
