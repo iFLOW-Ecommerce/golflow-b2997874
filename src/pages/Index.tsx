@@ -101,14 +101,34 @@ const Index = () => {
       const koIds = new Set(((koMatchesRes.data ?? []) as Array<{ id: string }>).map((m) => m.id));
       const koCount = (predsRes.data ?? []).filter((p: any) => koIds.has(p.match_id)).length;
       setCompletedKO(koCount);
-      const rows = ((ranking.data ?? []) as unknown) as Array<{ user_id: string; total_points: number }>;
+      const rows = ((ranking.data ?? []) as unknown) as Array<{ user_id: string; email: string | null; total_points: number }>;
       const idx = rows.findIndex((r) => r.user_id === user.id);
       if (idx >= 0) {
         setMyPosition(idx + 1);
         setMyPoints(rows[idx].total_points ?? 0);
+
+        // Compute window of up to 5 rows around the user
+        let start = idx - 2;
+        let end = idx + 2;
+        if (start < 0) {
+          end += -start;
+          start = 0;
+        }
+        if (end > rows.length - 1) {
+          start = Math.max(0, start - (end - (rows.length - 1)));
+          end = rows.length - 1;
+        }
+        const windowRows = rows.slice(start, end + 1).map((r, i) => ({
+          position: start + i + 1,
+          user_id: r.user_id,
+          email: r.email,
+          total_points: r.total_points ?? 0,
+        }));
+        setRankingWindow(windowRows);
       } else {
         setMyPosition(null);
         setMyPoints(0);
+        setRankingWindow([]);
       }
 
       setUpcoming((upcomingRes.data ?? []) as MatchRow[]);
