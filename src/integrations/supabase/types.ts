@@ -173,6 +173,7 @@ export type Database = {
         Returns: number
       }
       recalculate_user_ranks: { Args: never; Returns: undefined }
+      snapshot_user_ranks: { Args: never; Returns: undefined }
       stage_multiplier: { Args: { _stage: string }; Returns: number }
     }
     Enums: {
