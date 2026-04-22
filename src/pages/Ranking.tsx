@@ -14,6 +14,8 @@ interface RankingRow {
   email: string | null;
   total_points: number;
   predictions_count: number;
+  current_rank: number | null;
+  previous_rank: number | null;
 }
 
 const Ranking = () => {
@@ -30,24 +32,45 @@ const Ranking = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from("user_ranking" as any)
-        .select("user_id, email, total_points, predictions_count")
+        .select("user_id, email, total_points, predictions_count, current_rank, previous_rank")
         .order("total_points", { ascending: false })
-        .order("email", { ascending: true })
-        .limit(100);
+        .order("email", { ascending: true });
       if (!error && data) setRows(data as unknown as RankingRow[]);
       setLoading(false);
     };
     load();
   }, []);
 
-  const top = rows.slice(0, 20);
   const myIndex = rows.findIndex((r) => r.user_id === user?.id);
   const me = myIndex >= 0 ? rows[myIndex] : null;
   const myPosition = myIndex >= 0 ? myIndex + 1 : null;
-  const meInTop = myPosition !== null && myPosition <= 20;
 
   const displayName = (email: string | null) =>
     email ? email.split("@")[0] : "Usuario";
+
+  const positionCell = (pos: number) => {
+    if (pos === 1) return <span className="text-xl" aria-label="Primero">🥇</span>;
+    if (pos === 2) return <span className="text-xl" aria-label="Segundo">🥈</span>;
+    if (pos === 3) return <span className="text-xl" aria-label="Tercero">🥉</span>;
+    return <span className="font-semibold">#{pos}</span>;
+  };
+
+  const trendCell = (current: number | null, previous: number | null) => {
+    if (current == null || previous == null || current === previous) {
+      return <span aria-label="Sin cambios">🟰</span>;
+    }
+    if (current < previous) return <span aria-label="Subió" className="text-emerald-500">🔼</span>;
+    return <span aria-label="Bajó" className="text-destructive">🔽</span>;
+  };
+
+  const rowClassFor = (pos: number, isMe: boolean) => {
+    const base: string[] = [];
+    if (pos === 1) base.push("bg-yellow-500/10 border-l-4 border-l-yellow-500");
+    else if (pos === 2) base.push("bg-slate-400/10 border-l-4 border-l-slate-400");
+    else if (pos === 3) base.push("bg-amber-700/10 border-l-4 border-l-amber-700");
+    if (isMe) base.push("ring-2 ring-inset ring-primary bg-primary/10 hover:bg-primary/15");
+    return cn(...base);
+  };
 
   return (
     <AppLayout>
@@ -58,7 +81,7 @@ const Ranking = () => {
           </div>
           <div>
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Ranking</h1>
-            <p className="text-sm text-muted-foreground">Top 20 de jugadores por puntos totales.</p>
+            <p className="text-sm text-muted-foreground">Todos los jugadores ordenados por puntos.</p>
           </div>
         </div>
 
@@ -82,7 +105,7 @@ const Ranking = () => {
 
         <Card className="shadow-card">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Top 20</CardTitle>
+            <CardTitle className="text-base">Clasificación general</CardTitle>
             <CardDescription>Los puntos se actualizan cuando se cargan resultados reales.</CardDescription>
           </CardHeader>
           <CardContent>
@@ -92,7 +115,7 @@ const Ranking = () => {
                   <Skeleton key={i} className="h-10 w-full" />
                 ))}
               </div>
-            ) : top.length === 0 ? (
+            ) : rows.length === 0 ? (
               <p className="text-sm text-muted-foreground py-6 text-center">
                 Todavía no hay jugadores en el ranking.
               </p>
@@ -102,41 +125,30 @@ const Ranking = () => {
                   <TableRow>
                     <TableHead className="w-16">#</TableHead>
                     <TableHead>Usuario</TableHead>
+                    <TableHead className="w-16 text-center">Tend.</TableHead>
                     <TableHead className="text-right">Puntos</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {top.map((row, idx) => {
+                  {rows.map((row, idx) => {
                     const pos = idx + 1;
                     const isMe = row.user_id === user?.id;
                     return (
-                      <TableRow
-                        key={row.user_id}
-                        className={cn(isMe && "bg-primary/10 hover:bg-primary/15")}
-                      >
-                        <TableCell className="font-semibold">#{pos}</TableCell>
+                      <TableRow key={row.user_id} className={rowClassFor(pos, isMe)}>
+                        <TableCell>{positionCell(pos)}</TableCell>
                         <TableCell className="truncate max-w-[180px] sm:max-w-none">
                           <div className="flex items-center gap-2">
                             <span className={cn(isMe && "font-semibold")}>{displayName(row.email)}</span>
                             {isMe && <Badge variant="secondary" className="text-xs">Tú</Badge>}
                           </div>
                         </TableCell>
+                        <TableCell className="text-center">
+                          {trendCell(row.current_rank, row.previous_rank)}
+                        </TableCell>
                         <TableCell className="text-right font-semibold">{row.total_points}</TableCell>
                       </TableRow>
                     );
                   })}
-                  {me && !meInTop && myPosition && (
-                    <TableRow className="bg-primary/10 hover:bg-primary/15 border-t-2">
-                      <TableCell className="font-semibold">#{myPosition}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold">{displayName(me.email)}</span>
-                          <Badge variant="secondary" className="text-xs">Tú</Badge>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right font-semibold">{me.total_points}</TableCell>
-                    </TableRow>
-                  )}
                 </TableBody>
               </Table>
             )}
