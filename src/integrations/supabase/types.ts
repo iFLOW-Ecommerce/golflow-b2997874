@@ -127,12 +127,35 @@ export type Database = {
         }
         Relationships: []
       }
+      user_ranks: {
+        Row: {
+          current_rank: number | null
+          previous_rank: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          current_rank?: number | null
+          previous_rank?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          current_rank?: number | null
+          previous_rank?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       user_ranking: {
         Row: {
+          current_rank: number | null
           email: string | null
           predictions_count: number | null
+          previous_rank: number | null
           total_points: number | null
           user_id: string | null
         }
@@ -149,6 +172,7 @@ export type Database = {
         }
         Returns: number
       }
+      recalculate_user_ranks: { Args: never; Returns: undefined }
       stage_multiplier: { Args: { _stage: string }; Returns: number }
     }
     Enums: {
