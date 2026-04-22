@@ -162,6 +162,8 @@ const Admin = () => {
       return;
     }
     setSaving(true);
+    // Snapshot current_rank -> previous_rank BEFORE any points/ranks change
+    await supabase.rpc("snapshot_user_ranks" as any);
     let okCount = 0;
     let errCount = 0;
     for (const id of ids) {
@@ -177,7 +179,7 @@ const Admin = () => {
       else okCount++;
     }
     if (okCount > 0) {
-      // Recalculate ranks (shifts current -> previous, then recomputes)
+      // Recompute current_rank with the new points
       await supabase.rpc("recalculate_user_ranks" as any);
     }
     setSaving(false);
