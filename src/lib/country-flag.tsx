@@ -73,13 +73,12 @@ export const CountryFlag = ({ name, size = 18, className = "" }: CountryFlagProp
   
   if (!code) return null;
   
-  const w = Math.round((size * 4) / 3);
   return (
     <img
-      src={`https://flagcdn.com/${w}x${size}/${code}.png`}
-      srcSet={`https://flagcdn.com/${w * 2}x${size * 2}/${code}.png 2x`}
-      width={w}
-      height={size}
+      src={`https://flagcdn.com/24x18/${code}.png`}
+      srcSet={`https://flagcdn.com/48x36/${code}.png 2x`}
+      width={24}
+      height={18}
       alt={name}
       loading="lazy"
       className={`inline-block shrink-0 rounded-[2px] object-cover align-[-3px] ${className}`}
