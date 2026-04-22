@@ -74,7 +74,8 @@ const Index = () => {
         supabase
           .from("user_ranking" as any)
           .select("user_id, email, total_points")
-          .order("total_points", { ascending: false }),
+          .order("total_points", { ascending: false })
+          .order("email", { ascending: true }),
         supabase
           .from("matches")
           .select("id, stage, home_team, away_team, match_date, home_score, away_score, is_finished")
