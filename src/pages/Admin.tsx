@@ -176,9 +176,13 @@ const Admin = () => {
       if (error) errCount++;
       else okCount++;
     }
+    if (okCount > 0) {
+      // Recalculate ranks (shifts current -> previous, then recomputes)
+      await supabase.rpc("recalculate_user_ranks" as any);
+    }
     setSaving(false);
     if (okCount > 0) {
-      toast.success(`${okCount} resultado(s) guardado(s). Puntos recalculados.`);
+      toast.success(`${okCount} resultado(s) guardado(s). Puntos y ranking recalculados.`);
       await loadMatches();
     }
     if (errCount > 0) toast.error(`${errCount} con error`);
