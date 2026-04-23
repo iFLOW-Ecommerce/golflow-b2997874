@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { BarChart3 } from "lucide-react";
+import { BarChart3, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface RankingRow {
@@ -56,11 +56,29 @@ const Ranking = () => {
   };
 
   const trendCell = (current: number | null, previous: number | null) => {
+    const baseClass =
+      "inline-flex items-center gap-0.5 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide";
     if (current == null || previous == null || current === previous) {
-      return <span aria-label="Sin cambios">🟰</span>;
+      return (
+        <span className={cn(baseClass, "text-muted-foreground")} title="Sin cambios" aria-label="Sin cambios">
+          <Minus className="h-3 w-3" />
+        </span>
+      );
     }
-    if (current < previous) return <span aria-label="Subió" className="text-emerald-500">🔼</span>;
-    return <span aria-label="Bajó" className="text-destructive">🔽</span>;
+    if (current < previous) {
+      const delta = previous - current;
+      return (
+        <span className={cn(baseClass, "text-emerald-500")} title={`Subió ${delta}`} aria-label={`Subió ${delta}`}>
+          <TrendingUp className="h-3 w-3" />+{delta}
+        </span>
+      );
+    }
+    const delta = current - previous;
+    return (
+      <span className={cn(baseClass, "text-destructive")} title={`Bajó ${delta}`} aria-label={`Bajó ${delta}`}>
+        <TrendingDown className="h-3 w-3" />-{delta}
+      </span>
+    );
   };
 
   const rowClassFor = (pos: number, isMe: boolean) => {
@@ -125,8 +143,8 @@ const Ranking = () => {
                   <TableRow>
                     <TableHead className="w-16">#</TableHead>
                     <TableHead>Usuario</TableHead>
-                    <TableHead className="w-16 text-center">Tend.</TableHead>
                     <TableHead className="text-right">Puntos</TableHead>
+                    <TableHead className="w-20 text-center">Tend.</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -142,10 +160,10 @@ const Ranking = () => {
                             {isMe && <Badge variant="secondary" className="text-xs">Tú</Badge>}
                           </div>
                         </TableCell>
+                        <TableCell className="text-right font-semibold">{row.total_points}</TableCell>
                         <TableCell className="text-center">
                           {trendCell(row.current_rank, row.previous_rank)}
                         </TableCell>
-                        <TableCell className="text-right font-semibold">{row.total_points}</TableCell>
                       </TableRow>
                     );
                   })}
