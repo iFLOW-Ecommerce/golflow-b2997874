@@ -320,8 +320,13 @@ const Prediccion = () => {
             m.stage,
           )
         : null;
+    const isHighlighted = highlightId === m.id;
     return (
-      <div key={m.id} className={`rounded-lg border bg-card p-3 sm:p-4 ${locked ? "opacity-70" : ""}`}>
+      <div
+        key={m.id}
+        id={`match-${m.id}`}
+        className={`rounded-lg border bg-card p-3 sm:p-4 transition-shadow ${locked ? "opacity-70" : ""} ${isHighlighted ? "ring-2 ring-primary shadow-lg" : ""}`}
+      >
         <div className="text-xs text-muted-foreground mb-2 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <span>{formatDate(m.match_date)} hs</span>
