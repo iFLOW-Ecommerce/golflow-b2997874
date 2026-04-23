@@ -61,13 +61,20 @@ const isLocked = (iso: string) => {
 
 const Prediccion = () => {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const targetMatchId = searchParams.get("match");
   const [loading, setLoading] = useState(true);
   const [matches, setMatches] = useState<Match[]>([]);
   const [inputs, setInputs] = useState<Record<string, ScoreInput>>({});
   const [savedKeys, setSavedKeys] = useState<Set<string>>(new Set());
   const [statusByMatch, setStatusByMatch] = useState<Record<string, "saving" | "saved" | "error">>({});
+  const [activeMainTab, setActiveMainTab] = useState<string>("grupos");
+  const [activeGroup, setActiveGroup] = useState<string>("A");
+  const [activeKoStage, setActiveKoStage] = useState<string | null>(null);
+  const [highlightId, setHighlightId] = useState<string | null>(null);
   const timersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const savedTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const scrolledRef = useRef<string | null>(null);
   const [, setNowTick] = useState(0);
 
   useEffect(() => {
