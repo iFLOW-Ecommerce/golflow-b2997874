@@ -261,104 +261,105 @@ const Index = () => {
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary mb-2">
               <CalendarClock className="h-5 w-5 text-primary" />
             </div>
-            <CardTitle className="text-base">Próximos y últimos partidos</CardTitle>
-            <CardDescription>Lo que viene y lo que acaba de pasar.</CardDescription>
+            <CardTitle className="text-base">Próximos partidos</CardTitle>
+            <CardDescription>Lo que viene en breve.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-5">
-            <div className="space-y-2">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Próximos partidos
-              </h3>
-              {upcoming.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No hay próximos partidos.</p>
-              ) : (
-                <ul className="divide-y divide-border rounded-lg border bg-card">
-                  {upcoming.map((m) => {
-                    const pred = predsByMatch[m.id];
-                    return (
-                      <li key={m.id} className="flex items-center gap-3 px-3 py-2 text-sm">
-                        <span className="w-28 shrink-0 text-xs text-muted-foreground">
-                          {formatShortDate(m.match_date)}
+          <CardContent>
+            {upcoming.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No hay próximos partidos.</p>
+            ) : (
+              <ul className="divide-y divide-border rounded-lg border bg-card">
+                {upcoming.map((m) => {
+                  const pred = predsByMatch[m.id];
+                  return (
+                    <li key={m.id} className="flex items-center gap-3 px-3 py-2 text-sm">
+                      <span className="w-28 shrink-0 text-xs text-muted-foreground">
+                        {formatShortDate(m.match_date)}
+                      </span>
+                      <span className="flex-1 min-w-0 truncate flex items-center gap-2">
+                        <span className="truncate inline-flex items-center gap-1.5">
+                          <TeamName name={m.home_team} />
+                          <span className="text-muted-foreground">vs</span>
+                          <TeamName name={m.away_team} />
                         </span>
-                        <span className="flex-1 min-w-0 truncate flex items-center gap-2">
-                          <span className="truncate inline-flex items-center gap-1.5">
-                            <TeamName name={m.home_team} />
-                            <span className="text-muted-foreground">vs</span>
-                            <TeamName name={m.away_team} />
+                        <MultiplierBadge stage={m.stage} />
+                      </span>
+                      {pred ? (
+                        <span className="shrink-0 text-xs text-muted-foreground">
+                          Tu predicción:{" "}
+                          <span className="font-semibold text-foreground">
+                            {pred.predicted_home_score} - {pred.predicted_away_score}
                           </span>
-                          <MultiplierBadge stage={m.stage} />
                         </span>
-                        {pred ? (
-                          <span className="shrink-0 text-xs text-muted-foreground">
-                            Tu predicción:{" "}
+                      ) : (
+                        <Link
+                          to="/prediccion"
+                          aria-label="Cargar predicción"
+                          className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+                        >
+                          <span className="font-semibold">– –</span>
+                          <Clock className="h-4 w-4" />
+                        </Link>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-card">
+          <CardHeader className="pb-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary mb-2">
+              <CalendarClock className="h-5 w-5 text-primary" />
+            </div>
+            <CardTitle className="text-base">Últimos partidos</CardTitle>
+            <CardDescription>Lo que acaba de pasar.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {recent.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Aún no hay partidos jugados.</p>
+            ) : (
+              <ul className="divide-y divide-border rounded-lg border bg-card">
+                {recent.map((m) => {
+                  const pred = predsByMatch[m.id];
+                  return (
+                    <li key={m.id} className="flex items-center gap-3 px-3 py-2 text-sm">
+                      <span className="w-28 shrink-0 text-xs text-muted-foreground">
+                        {formatShortDate(m.match_date)}
+                      </span>
+                      <span className="flex-1 min-w-0 truncate flex items-center gap-2">
+                        <span className="truncate inline-flex items-center gap-1.5">
+                          <TeamName name={m.home_team} />
+                          <span className="text-muted-foreground">vs</span>
+                          <TeamName name={m.away_team} />
+                        </span>
+                        <MultiplierBadge stage={m.stage} />
+                      </span>
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        Real:{" "}
+                        <span className="font-semibold text-primary">
+                          {m.home_score ?? "-"} - {m.away_score ?? "-"}
+                        </span>
+                        {pred && (
+                          <>
+                            {" "}
+                            · Tuya:{" "}
                             <span className="font-semibold text-foreground">
                               {pred.predicted_home_score} - {pred.predicted_away_score}
+                            </span>{" "}
+                            <span className="font-semibold text-primary">
+                              +{pred.points_awarded ?? 0} pts
                             </span>
-                          </span>
-                        ) : (
-                          <Link
-                            to="/prediccion"
-                            aria-label="Cargar predicción"
-                            className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
-                          >
-                            <span className="font-semibold">– –</span>
-                            <Clock className="h-4 w-4" />
-                          </Link>
+                          </>
                         )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Últimos partidos
-              </h3>
-              {recent.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Aún no hay partidos jugados.</p>
-              ) : (
-                <ul className="divide-y divide-border rounded-lg border bg-card">
-                  {recent.map((m) => {
-                    const pred = predsByMatch[m.id];
-                    return (
-                      <li key={m.id} className="flex items-center gap-3 px-3 py-2 text-sm">
-                        <span className="w-28 shrink-0 text-xs text-muted-foreground">
-                          {formatShortDate(m.match_date)}
-                        </span>
-                        <span className="flex-1 min-w-0 truncate flex items-center gap-2">
-                          <span className="truncate inline-flex items-center gap-1.5">
-                            <TeamName name={m.home_team} />
-                            <span className="text-muted-foreground">vs</span>
-                            <TeamName name={m.away_team} />
-                          </span>
-                          <MultiplierBadge stage={m.stage} />
-                        </span>
-                        <span className="shrink-0 text-xs text-muted-foreground">
-                          Real:{" "}
-                          <span className="font-semibold text-primary">
-                            {m.home_score ?? "-"} - {m.away_score ?? "-"}
-                          </span>
-                          {pred && (
-                            <>
-                              {" "}
-                              · Tuya:{" "}
-                              <span className="font-semibold text-foreground">
-                                {pred.predicted_home_score} - {pred.predicted_away_score}
-                              </span>{" "}
-                              <span className="font-semibold text-primary">
-                                +{pred.points_awarded ?? 0} pts
-                              </span>
-                            </>
-                          )}
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </CardContent>
         </Card>
       </div>
