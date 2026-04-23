@@ -461,14 +461,14 @@ const Prediccion = () => {
             <Loader2 className="h-5 w-5 animate-spin mr-2" /> Cargando partidos...
           </div>
         ) : (
-          <Tabs defaultValue="grupos" className="w-full">
+          <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="grupos">Fase de grupos</TabsTrigger>
               <TabsTrigger value="eliminatorias">Eliminatorias</TabsTrigger>
             </TabsList>
 
             <TabsContent value="grupos" className="mt-4">
-              <Tabs defaultValue="A" className="w-full">
+              <Tabs value={activeGroup} onValueChange={setActiveGroup} className="w-full">
                 <TabsList className="flex flex-wrap h-auto justify-start gap-1 bg-muted p-1">
                   {GROUPS.map((g) => (
                     <TabsTrigger key={g} value={g} className="px-3 py-1.5 text-sm">
