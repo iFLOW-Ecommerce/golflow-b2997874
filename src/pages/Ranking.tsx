@@ -6,8 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { BarChart3, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { TrendBadge } from "@/lib/trend-badge";
 
 interface RankingRow {
   user_id: string;
@@ -55,31 +56,9 @@ const Ranking = () => {
     return <span className="font-semibold">#{pos}</span>;
   };
 
-  const trendCell = (current: number | null, previous: number | null) => {
-    const baseClass =
-      "inline-flex items-center gap-0.5 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide";
-    if (current == null || previous == null || current === previous) {
-      return (
-        <span className={cn(baseClass, "text-muted-foreground")} title="Sin cambios" aria-label="Sin cambios">
-          <Minus className="h-3 w-3" />
-        </span>
-      );
-    }
-    if (current < previous) {
-      const delta = previous - current;
-      return (
-        <span className={cn(baseClass, "text-emerald-500")} title={`Subió ${delta}`} aria-label={`Subió ${delta}`}>
-          <TrendingUp className="h-3 w-3" />+{delta}
-        </span>
-      );
-    }
-    const delta = current - previous;
-    return (
-      <span className={cn(baseClass, "text-destructive")} title={`Bajó ${delta}`} aria-label={`Bajó ${delta}`}>
-        <TrendingDown className="h-3 w-3" />-{delta}
-      </span>
-    );
-  };
+  const trendCell = (current: number | null, previous: number | null) => (
+    <TrendBadge current={current} previous={previous} />
+  );
 
   const rowClassFor = (pos: number, isMe: boolean) => {
     const base: string[] = [];

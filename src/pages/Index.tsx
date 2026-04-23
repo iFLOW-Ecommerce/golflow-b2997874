@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { MultiplierBadge } from "@/lib/multiplier";
 import { TeamName } from "@/lib/country-flag";
+import { TrendBadge } from "@/lib/trend-badge";
 
 const TOTAL_GROUP_MATCHES = 48;
 const TOTAL_KNOCKOUT_MATCHES = 31;
@@ -52,7 +53,7 @@ const Index = () => {
   const [completedKO, setCompletedKO] = useState<number | null>(null);
   const [myPosition, setMyPosition] = useState<number | null>(null);
   const [myPoints, setMyPoints] = useState<number>(0);
-  const [rankingWindow, setRankingWindow] = useState<Array<{ position: number; user_id: string; email: string | null; total_points: number }>>([]);
+  const [rankingWindow, setRankingWindow] = useState<Array<{ position: number; user_id: string; email: string | null; total_points: number; current_rank: number | null; previous_rank: number | null }>>([]);
   const [upcoming, setUpcoming] = useState<MatchRow[]>([]);
   const [recent, setRecent] = useState<MatchRow[]>([]);
   const [predsByMatch, setPredsByMatch] = useState<Record<string, PredRow>>({});
@@ -73,7 +74,7 @@ const Index = () => {
           .eq("matches.stage", "group"),
         supabase
           .from("user_ranking" as any)
-          .select("user_id, email, total_points")
+          .select("user_id, email, total_points, current_rank, previous_rank")
           .order("total_points", { ascending: false })
           .order("email", { ascending: true }),
         supabase
@@ -103,7 +104,7 @@ const Index = () => {
       const koIds = new Set(((koMatchesRes.data ?? []) as Array<{ id: string }>).map((m) => m.id));
       const koCount = (predsRes.data ?? []).filter((p: any) => koIds.has(p.match_id)).length;
       setCompletedKO(koCount);
-      const rows = ((ranking.data ?? []) as unknown) as Array<{ user_id: string; email: string | null; total_points: number }>;
+      const rows = ((ranking.data ?? []) as unknown) as Array<{ user_id: string; email: string | null; total_points: number; current_rank: number | null; previous_rank: number | null }>;
       const idx = rows.findIndex((r) => r.user_id === user.id);
       if (idx >= 0) {
         setMyPosition(idx + 1);
@@ -125,6 +126,8 @@ const Index = () => {
           user_id: r.user_id,
           email: r.email,
           total_points: r.total_points ?? 0,
+          current_rank: r.current_rank,
+          previous_rank: r.previous_rank,
         }));
         setRankingWindow(windowRows);
       } else {
@@ -235,10 +238,11 @@ const Index = () => {
                           #{r.position}
                         </span>
                         <span className="flex-1 min-w-0 truncate">{name}</span>
-                        <span className="shrink-0 text-xs tabular-nums">
+                        <span className="shrink-0 text-xs tabular-nums flex items-center gap-2">
                           <span className={isMe ? "text-primary" : "text-muted-foreground"}>
                             {r.total_points} pts
                           </span>
+                          <TrendBadge current={r.current_rank} previous={r.previous_rank} />
                         </span>
                       </li>
                     );
