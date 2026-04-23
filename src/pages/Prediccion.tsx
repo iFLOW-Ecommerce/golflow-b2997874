@@ -174,6 +174,32 @@ const Prediccion = () => {
     };
   }, []);
 
+  // Navigate to a specific match passed via ?match=<id>
+  useEffect(() => {
+    if (!targetMatchId || matches.length === 0) return;
+    if (scrolledRef.current === targetMatchId) return;
+    const target = matches.find((m) => m.id === targetMatchId);
+    if (!target) return;
+    if (target.stage === "group") {
+      setActiveMainTab("grupos");
+      if (target.group_name) setActiveGroup(target.group_name);
+    } else {
+      setActiveMainTab("eliminatorias");
+      setActiveKoStage(target.stage);
+    }
+    scrolledRef.current = targetMatchId;
+    setHighlightId(targetMatchId);
+    const t = setTimeout(() => {
+      const el = document.getElementById(`match-${targetMatchId}`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 250);
+    const t2 = setTimeout(() => setHighlightId(null), 2500);
+    return () => {
+      clearTimeout(t);
+      clearTimeout(t2);
+    };
+  }, [targetMatchId, matches]);
+
   const persist = async (matchId: string, home: number, away: number) => {
     if (!user) return;
     setStatusByMatch((s) => ({ ...s, [matchId]: "saving" }));
