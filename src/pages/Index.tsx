@@ -1,18 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Trophy, Target, BarChart3, CalendarClock, Clock } from "lucide-react";
+import { Trophy, BarChart3, CalendarClock, Clock } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { MultiplierBadge } from "@/lib/multiplier";
 import { TeamName } from "@/lib/country-flag";
 import { TrendBadge } from "@/lib/trend-badge";
 
-const TOTAL_GROUP_MATCHES = 48;
-const TOTAL_KNOCKOUT_MATCHES = 31;
 const KNOCKOUT_STAGES = ["round_of_32", "round_of_16", "quarterfinal", "semifinal", "final"];
 
 type MatchRow = {
@@ -49,8 +46,6 @@ const formatShortDate = (iso: string) => {
 
 const Index = () => {
   const { user } = useAuth();
-  const [completed, setCompleted] = useState<number | null>(null);
-  const [completedKO, setCompletedKO] = useState<number | null>(null);
   const [myPosition, setMyPosition] = useState<number | null>(null);
   const [myPoints, setMyPoints] = useState<number>(0);
   const [rankingWindow, setRankingWindow] = useState<Array<{ position: number; user_id: string; email: string | null; total_points: number; current_rank: number | null; previous_rank: number | null }>>([]);
@@ -66,12 +61,7 @@ const Index = () => {
     if (!user) return;
     const load = async () => {
       const nowIso = new Date().toISOString();
-      const [{ count }, ranking, upcomingRes, recentRes, predsRes, koMatchesRes] = await Promise.all([
-        supabase
-          .from("predictions")
-          .select("id, matches!inner(stage)", { count: "exact", head: true })
-          .eq("user_id", user.id)
-          .eq("matches.stage", "group"),
+      const [ranking, upcomingRes, recentRes, predsRes] = await Promise.all([
         supabase
           .from("user_ranking" as any)
           .select("user_id, email, total_points, current_rank, previous_rank")
@@ -94,23 +84,14 @@ const Index = () => {
           .from("predictions")
           .select("match_id, predicted_home_score, predicted_away_score, points_awarded")
           .eq("user_id", user.id),
-        supabase
-          .from("matches")
-          .select("id")
-          .in("stage", KNOCKOUT_STAGES),
       ]);
 
-      setCompleted(count ?? 0);
-      const koIds = new Set(((koMatchesRes.data ?? []) as Array<{ id: string }>).map((m) => m.id));
-      const koCount = (predsRes.data ?? []).filter((p: any) => koIds.has(p.match_id)).length;
-      setCompletedKO(koCount);
       const rows = ((ranking.data ?? []) as unknown) as Array<{ user_id: string; email: string | null; total_points: number; current_rank: number | null; previous_rank: number | null }>;
       const idx = rows.findIndex((r) => r.user_id === user.id);
       if (idx >= 0) {
         setMyPosition(idx + 1);
         setMyPoints(rows[idx].total_points ?? 0);
 
-        // Compute window of up to 5 rows around the user
         let start = idx - 2;
         let end = idx + 2;
         if (start < 0) {
@@ -137,7 +118,6 @@ const Index = () => {
       }
 
       setUpcoming((upcomingRes.data ?? []) as MatchRow[]);
-      // reverse recent so the oldest is at the bottom
       setRecent(((recentRes.data ?? []) as MatchRow[]).slice().reverse());
 
       const map: Record<string, PredRow> = {};
@@ -148,11 +128,6 @@ const Index = () => {
     };
     load();
   }, [user]);
-
-  const done = completed ?? 0;
-  const percent = Math.round((done / TOTAL_GROUP_MATCHES) * 100);
-  const doneKO = completedKO ?? 0;
-  const percentKO = Math.round((doneKO / TOTAL_KNOCKOUT_MATCHES) * 100);
 
   return (
     <AppLayout>
@@ -173,87 +148,6 @@ const Index = () => {
           <p className="text-base opacity-90">
             {user?.email ? `Hola, ${user.email}.` : ""} Predecí los partidos y competí con tus amigos.
           </p>
-        </section>
-
-        <section className="grid gap-4 sm:grid-cols-2">
-          <Card className="shadow-card">
-            <CardHeader className="pb-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary mb-2">
-                <Target className="h-5 w-5 text-primary" />
-              </div>
-              <CardTitle className="text-base">Mi Predicción</CardTitle>
-              <CardDescription>Fase de grupos del Mundial 2026.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">
-                  Predicciones de grupos completadas:{" "}
-                  <span className="font-semibold text-foreground">
-                    {done} de {TOTAL_GROUP_MATCHES}
-                  </span>
-                </p>
-                <Progress value={percent} className="h-2" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">
-                  Predicciones de eliminatorias completadas:{" "}
-                  <span className="font-semibold text-foreground">
-                    {doneKO} de {TOTAL_KNOCKOUT_MATCHES}
-                  </span>
-                </p>
-                <Progress value={percentKO} className="h-2" />
-              </div>
-              <Button asChild size="sm" className="w-full sm:w-auto">
-                <Link to="/prediccion">Cargar predicciones</Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-card">
-            <CardHeader className="pb-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary mb-2">
-                <BarChart3 className="h-5 w-5 text-primary" />
-              </div>
-              <CardTitle className="text-base">Ranking</CardTitle>
-              <CardDescription>
-                {myPosition
-                  ? `Tu posición actual: #${myPosition} con ${myPoints} puntos.`
-                  : "Aún no tenés posición en el ranking."}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {rankingWindow.length > 0 && (
-                <ul className="divide-y divide-border rounded-lg border bg-card overflow-hidden">
-                  {rankingWindow.map((r) => {
-                    const isMe = r.user_id === user?.id;
-                    const name = r.email ? r.email.split("@")[0] : "—";
-                    return (
-                      <li
-                        key={r.user_id}
-                        className={`flex items-center gap-3 px-3 py-2 text-sm ${
-                          isMe ? "bg-primary/10 border-l-2 border-l-primary font-semibold" : ""
-                        }`}
-                      >
-                        <span className="w-8 shrink-0 text-xs text-muted-foreground tabular-nums">
-                          #{r.position}
-                        </span>
-                        <span className="flex-1 min-w-0 truncate">{name}</span>
-                        <span className="shrink-0 text-xs tabular-nums flex items-center gap-2">
-                          <span className={isMe ? "text-primary" : "text-muted-foreground"}>
-                            {r.total_points} pts
-                          </span>
-                          <TrendBadge current={r.current_rank} previous={r.previous_rank} />
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-              <Button asChild size="sm" variant="outline" className="w-full sm:w-auto">
-                <Link to="/ranking">Ver ranking</Link>
-              </Button>
-            </CardContent>
-          </Card>
         </section>
 
         <Card className="shadow-card">
@@ -293,7 +187,7 @@ const Index = () => {
                         </span>
                       ) : (
                         <Link
-                          to="/prediccion"
+                          to={`/prediccion?match=${m.id}`}
                           aria-label="Cargar predicción"
                           className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
                         >
@@ -306,6 +200,52 @@ const Index = () => {
                 })}
               </ul>
             )}
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-card">
+          <CardHeader className="pb-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary mb-2">
+              <BarChart3 className="h-5 w-5 text-primary" />
+            </div>
+            <CardTitle className="text-base">Ranking</CardTitle>
+            <CardDescription>
+              {myPosition
+                ? `Tu posición actual: #${myPosition} con ${myPoints} puntos.`
+                : "Aún no tenés posición en el ranking."}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {rankingWindow.length > 0 && (
+              <ul className="divide-y divide-border rounded-lg border bg-card overflow-hidden">
+                {rankingWindow.map((r) => {
+                  const isMe = r.user_id === user?.id;
+                  const name = r.email ? r.email.split("@")[0] : "—";
+                  return (
+                    <li
+                      key={r.user_id}
+                      className={`flex items-center gap-3 px-3 py-2 text-sm ${
+                        isMe ? "bg-primary/10 border-l-2 border-l-primary font-semibold" : ""
+                      }`}
+                    >
+                      <span className="w-8 shrink-0 text-xs text-muted-foreground tabular-nums">
+                        #{r.position}
+                      </span>
+                      <span className="flex-1 min-w-0 truncate">{name}</span>
+                      <span className="shrink-0 text-xs tabular-nums flex items-center gap-2">
+                        <span className={isMe ? "text-primary" : "text-muted-foreground"}>
+                          {r.total_points} pts
+                        </span>
+                        <TrendBadge current={r.current_rank} previous={r.previous_rank} />
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+            <Button asChild size="sm" variant="outline" className="w-full sm:w-auto">
+              <Link to="/ranking">Ver ranking</Link>
+            </Button>
           </CardContent>
         </Card>
 
