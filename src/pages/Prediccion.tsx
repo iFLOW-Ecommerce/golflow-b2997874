@@ -184,7 +184,6 @@ const Prediccion = () => {
       if (target.group_name) setActiveGroup(target.group_name);
     } else {
       setActiveMainTab("eliminatorias");
-      setActiveKoStage(target.stage);
     }
     scrolledRef.current = targetMatchId;
     setHighlightId(targetMatchId);
