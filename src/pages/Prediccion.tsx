@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Target, Loader2, Check } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,13 +61,19 @@ const isLocked = (iso: string) => {
 
 const Prediccion = () => {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const targetMatchId = searchParams.get("match");
   const [loading, setLoading] = useState(true);
   const [matches, setMatches] = useState<Match[]>([]);
   const [inputs, setInputs] = useState<Record<string, ScoreInput>>({});
   const [savedKeys, setSavedKeys] = useState<Set<string>>(new Set());
   const [statusByMatch, setStatusByMatch] = useState<Record<string, "saving" | "saved" | "error">>({});
+  const [activeMainTab, setActiveMainTab] = useState<string>("grupos");
+  const [activeGroup, setActiveGroup] = useState<string>("A");
+  const [highlightId, setHighlightId] = useState<string | null>(null);
   const timersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const savedTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const scrolledRef = useRef<string | null>(null);
   const [, setNowTick] = useState(0);
 
   useEffect(() => {
@@ -165,6 +172,31 @@ const Prediccion = () => {
       Object.values(savedTimersRef.current).forEach(clearTimeout);
     };
   }, []);
+
+  // Navigate to a specific match passed via ?match=<id>
+  useEffect(() => {
+    if (!targetMatchId || matches.length === 0) return;
+    if (scrolledRef.current === targetMatchId) return;
+    const target = matches.find((m) => m.id === targetMatchId);
+    if (!target) return;
+    if (target.stage === "group") {
+      setActiveMainTab("grupos");
+      if (target.group_name) setActiveGroup(target.group_name);
+    } else {
+      setActiveMainTab("eliminatorias");
+    }
+    scrolledRef.current = targetMatchId;
+    setHighlightId(targetMatchId);
+    const t = setTimeout(() => {
+      const el = document.getElementById(`match-${targetMatchId}`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 250);
+    const t2 = setTimeout(() => setHighlightId(null), 2500);
+    return () => {
+      clearTimeout(t);
+      clearTimeout(t2);
+    };
+  }, [targetMatchId, matches]);
 
   const persist = async (matchId: string, home: number, away: number) => {
     if (!user) return;
@@ -286,8 +318,13 @@ const Prediccion = () => {
             m.stage,
           )
         : null;
+    const isHighlighted = highlightId === m.id;
     return (
-      <div key={m.id} className={`rounded-lg border bg-card p-3 sm:p-4 ${locked ? "opacity-70" : ""}`}>
+      <div
+        key={m.id}
+        id={`match-${m.id}`}
+        className={`rounded-lg border bg-card p-3 sm:p-4 transition-shadow ${locked ? "opacity-70" : ""} ${isHighlighted ? "ring-2 ring-primary shadow-lg" : ""}`}
+      >
         <div className="text-xs text-muted-foreground mb-2 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <span>{formatDate(m.match_date)} hs</span>
@@ -422,14 +459,14 @@ const Prediccion = () => {
             <Loader2 className="h-5 w-5 animate-spin mr-2" /> Cargando partidos...
           </div>
         ) : (
-          <Tabs defaultValue="grupos" className="w-full">
+          <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="grupos">Fase de grupos</TabsTrigger>
               <TabsTrigger value="eliminatorias">Eliminatorias</TabsTrigger>
             </TabsList>
 
             <TabsContent value="grupos" className="mt-4">
-              <Tabs defaultValue="A" className="w-full">
+              <Tabs value={activeGroup} onValueChange={setActiveGroup} className="w-full">
                 <TabsList className="flex flex-wrap h-auto justify-start gap-1 bg-muted p-1">
                   {GROUPS.map((g) => (
                     <TabsTrigger key={g} value={g} className="px-3 py-1.5 text-sm">
