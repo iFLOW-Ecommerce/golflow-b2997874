@@ -383,7 +383,7 @@ const Prediccion = () => {
                   <span className="text-muted-foreground">
                     {" "}
                     ({breakdown.parts.join(" + ")}
-                    {breakdown.multiplier > 1 ? ` × ${breakdown.multiplier}` : ""})
+                    {breakdown.multiplier > 1 ? ` + Multiplicador × ${breakdown.multiplier}` : ""})
                   </span>
                 )}
               </div>
