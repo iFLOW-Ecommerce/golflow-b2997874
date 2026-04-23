@@ -70,7 +70,6 @@ const Prediccion = () => {
   const [statusByMatch, setStatusByMatch] = useState<Record<string, "saving" | "saved" | "error">>({});
   const [activeMainTab, setActiveMainTab] = useState<string>("grupos");
   const [activeGroup, setActiveGroup] = useState<string>("A");
-  const [activeKoStage, setActiveKoStage] = useState<string | null>(null);
   const [highlightId, setHighlightId] = useState<string | null>(null);
   const timersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const savedTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
