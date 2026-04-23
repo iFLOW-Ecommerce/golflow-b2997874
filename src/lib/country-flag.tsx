@@ -10,7 +10,7 @@ const FLAG_MAP: Record<string, string> = {
   "Brasil": "br",
   "Canadá": "ca",
   "Catar": "qa",
-  "Chequia": "cz",
+  "República Checa": "cz",
   "Colombia": "co",
   "Costa de Marfil": "ci",
   "Croacia": "hr",
