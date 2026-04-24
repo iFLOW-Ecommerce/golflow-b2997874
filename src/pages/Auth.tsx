@@ -196,7 +196,18 @@ const Auth = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Elegí tu avatar</Label>
+                    <div className="flex items-center justify-between">
+                      <Label>Elegí tu avatar</Label>
+                      <button
+                        type="button"
+                        onClick={() => setAvatarBase(generateBase())}
+                        aria-label="Generar nuevos avatares"
+                        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <RefreshCw className="h-3.5 w-3.5" />
+                        Nuevos
+                      </button>
+                    </div>
                     <div className="grid grid-cols-4 gap-2">
                       {avatarSeeds.map((seed) => {
                         const isSel = seed === selectedSeed;
