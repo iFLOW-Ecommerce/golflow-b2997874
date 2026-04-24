@@ -127,6 +127,7 @@ const Ranking = () => {
                   <TableRow>
                     <TableHead className="w-16">#</TableHead>
                     <TableHead>Usuario</TableHead>
+                    <TableHead className="hidden sm:table-cell">Equipo</TableHead>
                     <TableHead className="text-right">Puntos</TableHead>
                     <TableHead className="w-20 text-center">Tend.</TableHead>
                   </TableRow>
@@ -135,14 +136,19 @@ const Ranking = () => {
                   {rows.map((row, idx) => {
                     const pos = idx + 1;
                     const isMe = row.user_id === user?.id;
+                    const name = displayName(row);
                     return (
                       <TableRow key={row.user_id} className={rowClassFor(pos, isMe)}>
                         <TableCell>{positionCell(pos)}</TableCell>
-                        <TableCell className="truncate max-w-[180px] sm:max-w-none">
-                          <div className="flex items-center gap-2">
-                            <span className={cn(isMe && "font-semibold")}>{displayName(row.email)}</span>
-                            {isMe && <Badge variant="secondary" className="text-xs">Tú</Badge>}
+                        <TableCell className="truncate max-w-[200px] sm:max-w-none">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <UserAvatar seed={row.avatar_seed} name={name} className="h-7 w-7 shrink-0" />
+                            <span className={cn("truncate", isMe && "font-semibold")}>{name}</span>
+                            {isMe && <Badge variant="secondary" className="text-xs shrink-0">Tú</Badge>}
                           </div>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell text-sm text-muted-foreground truncate max-w-[180px]">
+                          {row.team_name ?? "—"}
                         </TableCell>
                         <TableCell className="text-right font-semibold">{row.total_points}</TableCell>
                         <TableCell className="text-center">
