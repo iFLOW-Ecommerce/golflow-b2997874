@@ -181,28 +181,75 @@ const Index = () => {
           className="rounded-2xl p-6 md:p-10 text-primary-foreground shadow-elegant"
           style={{ background: "var(--gradient-hero)" }}
         >
-          <div className="flex items-center gap-3 mb-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 backdrop-blur">
-              <Trophy className="h-5 w-5" />
-            </div>
-            <span className="text-sm font-medium opacity-90">Mundial 2026</span>
-          </div>
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">
-            Bienvenido al Prode Mundial 2026
-          </h1>
-          <p className="text-base opacity-90">
-            {user ? `Hola, ${firstName(myProfile ?? { email: user.email ?? null })}.` : ""} Predecí los partidos y competí con tus amigos.
-          </p>
-          {user && upcoming.length > 0 && (() => {
-            const missing = upcoming.filter((m) => !predsByMatch[m.id]).length;
-            return (
-              <p className="text-sm opacity-90 mt-2">
-                {missing === 0
-                  ? "🏖️ Estás al día con tus predicciones"
-                  : `🎯 Te faltan ${missing} ${missing === 1 ? "predicción" : "predicciones"} para estar al día`}
+          <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
+            <div className="min-w-0">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 backdrop-blur">
+                  <Trophy className="h-5 w-5" />
+                </div>
+                <span className="text-sm font-medium opacity-90">Mundial 2026</span>
+              </div>
+              <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">
+                Bienvenido al Prode Mundial 2026
+              </h1>
+              <p className="text-base opacity-90">
+                {user ? `Hola, ${firstName(myProfile ?? { email: user.email ?? null })}.` : ""} Predecí los partidos y competí con tus amigos.
               </p>
-            );
-          })()}
+              {user && upcoming.length > 0 && (() => {
+                const missing = upcoming.filter((m) => !predsByMatch[m.id]).length;
+                return (
+                  <p className="text-sm opacity-90 mt-2">
+                    {missing === 0
+                      ? "🏖️ Estás al día con tus predicciones"
+                      : `🎯 Te faltan ${missing} ${missing === 1 ? "predicción" : "predicciones"} para estar al día`}
+                  </p>
+                );
+              })()}
+            </div>
+
+            {user && myPosition && (
+              <div className="grid grid-cols-2 gap-3 md:w-[320px]">
+                {/* Global */}
+                <div className="rounded-xl bg-white/10 backdrop-blur p-3 border border-white/15">
+                  <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide opacity-90 font-medium">
+                    <span>🌐</span>
+                    <span>Global</span>
+                  </div>
+                  <div className="mt-1.5 flex items-baseline gap-1.5">
+                    <span className="text-2xl font-bold leading-none">#{myPosition}</span>
+                    <span className="text-xs opacity-80">de {globalTotal}</span>
+                  </div>
+                  <div className="mt-1.5 flex items-center gap-1.5 text-xs">
+                    <span className="font-semibold">{myPoints} pts</span>
+                    <TrendBadge current={myCurrentRank} previous={myPreviousRank} />
+                  </div>
+                </div>
+
+                {/* Team */}
+                <div className="rounded-xl bg-white/15 backdrop-blur p-3 border border-white/20">
+                  <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide opacity-90 font-medium">
+                    <span>⭐</span>
+                    <span className="truncate">{myTeamName ?? "Sin equipo"}</span>
+                  </div>
+                  {myTeamId && myTeamPosition ? (
+                    <>
+                      <div className="mt-1.5 flex items-baseline gap-1.5">
+                        <span className="text-2xl font-bold leading-none">#{myTeamPosition}</span>
+                        <span className="text-xs opacity-80">de {myTeamTotal}</span>
+                      </div>
+                      <div className="mt-1.5 flex items-center gap-1.5 text-xs">
+                        <TrendBadge current={myTeamCurrentRank} previous={myTeamPreviousRank} />
+                      </div>
+                    </>
+                  ) : (
+                    <p className="mt-1.5 text-xs opacity-80">
+                      {myTeamId ? "Sin posición aún." : "Sin equipo asignado."}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </section>
 
         <Card className="shadow-card">
