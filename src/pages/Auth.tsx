@@ -28,14 +28,18 @@ const Auth = () => {
   const [lastName, setLastName] = useState("");
   const [teamId, setTeamId] = useState<string>("");
   const [teams, setTeams] = useState<Team[]>([]);
-  const [avatarBase] = useState(() =>
-    typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
-  );
+  const generateBase = () =>
+    typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+  const [avatarBase, setAvatarBase] = useState(generateBase);
   const avatarSeeds = useMemo(
     () => Array.from({ length: 8 }, (_, i) => `${avatarBase}-${i + 1}`),
     [avatarBase],
   );
   const [selectedSeed, setSelectedSeed] = useState<string>(avatarSeeds[0]);
+
+  useEffect(() => {
+    setSelectedSeed(avatarSeeds[0]);
+  }, [avatarSeeds]);
 
   useEffect(() => {
     if (!loading && user) navigate("/", { replace: true });
