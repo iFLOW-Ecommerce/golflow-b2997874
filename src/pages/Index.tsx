@@ -161,6 +161,16 @@ const Index = () => {
           <p className="text-base opacity-90">
             {user ? `Hola, ${firstName(myProfile ?? { email: user.email ?? null })}.` : ""} Predecí los partidos y competí con tus amigos.
           </p>
+          {user && upcoming.length > 0 && (() => {
+            const missing = upcoming.filter((m) => !predsByMatch[m.id]).length;
+            return (
+              <p className="text-sm opacity-90 mt-2">
+                {missing === 0
+                  ? "🏖️ Estás al día con tus predicciones"
+                  : `🎯 Te faltan ${missing} ${missing === 1 ? "predicción" : "predicciones"} para estar al día`}
+              </p>
+            );
+          })()}
         </section>
 
         <Card className="shadow-card">
