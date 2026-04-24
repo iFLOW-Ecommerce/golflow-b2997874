@@ -46,6 +46,21 @@ const formatShortDate = (iso: string) => {
   }
 };
 
+const streakEmoji = (n: number) => {
+  if (n <= 0) return "😴";
+  if (n === 1) return "🌱";
+  if (n === 2) return "😁";
+  if (n === 3) return "😎";
+  if (n === 4) return "🚀";
+  if (n === 5) return "✨";
+  if (n === 6) return "🔥";
+  if (n === 7) return "🔥🔥";
+  if (n === 8) return "🔥🔥🔥";
+  if (n === 9) return "👑";
+  if (n === 10) return "👑👑";
+  return "👑👑👑";
+};
+
 const Index = () => {
   const { user } = useAuth();
   const [myPosition, setMyPosition] = useState<number | null>(null);
@@ -64,6 +79,8 @@ const Index = () => {
   const [upcoming, setUpcoming] = useState<MatchRow[]>([]);
   const [recent, setRecent] = useState<MatchRow[]>([]);
   const [predsByMatch, setPredsByMatch] = useState<Record<string, PredRow>>({});
+  const [accuracy, setAccuracy] = useState<number | null>(null);
+  const [streak, setStreak] = useState<number>(0);
 
   useEffect(() => {
     document.title = "Inicio | Prode Mundial 2026";
@@ -73,7 +90,7 @@ const Index = () => {
     if (!user) return;
     const load = async () => {
       const nowIso = new Date().toISOString();
-      const [ranking, upcomingRes, recentRes, predsRes, profileRes] = await Promise.all([
+      const [ranking, upcomingRes, recentRes, predsRes, profileRes, finishedRes] = await Promise.all([
         supabase
           .from("user_ranking" as any)
           .select("user_id, email, first_name, last_name, avatar_seed, team_id, team_name, total_points, current_rank, previous_rank, team_current_rank, team_previous_rank")
@@ -101,6 +118,11 @@ const Index = () => {
           .select("first_name, last_name, email")
           .eq("user_id", user.id)
           .maybeSingle(),
+        supabase
+          .from("matches")
+          .select("id, match_date")
+          .eq("is_finished", true)
+          .order("match_date", { ascending: true }),
       ]);
 
       setMyProfile((profileRes.data as any) ?? null);
@@ -170,6 +192,27 @@ const Index = () => {
         map[p.match_id] = p as PredRow;
       });
       setPredsByMatch(map);
+
+      // Accuracy & streak: only over finished matches the user predicted
+      const finishedMatches = (finishedRes.data ?? []) as Array<{ id: string; match_date: string }>;
+      const resolved = finishedMatches
+        .map((m) => ({ m, p: map[m.id] }))
+        .filter((x) => x.p);
+
+      if (resolved.length === 0) {
+        setAccuracy(null);
+        setStreak(0);
+      } else {
+        const hits = resolved.filter((x) => (x.p.points_awarded ?? 0) > 0).length;
+        setAccuracy(Math.round((hits / resolved.length) * 100));
+        // streak counting backwards from most recent
+        let s = 0;
+        for (let i = resolved.length - 1; i >= 0; i--) {
+          if ((resolved[i].p.points_awarded ?? 0) > 0) s++;
+          else break;
+        }
+        setStreak(s);
+      }
     };
     load();
   }, [user]);
@@ -213,6 +256,20 @@ const Index = () => {
                   </p>
                 );
               })()}
+              {user && (accuracy !== null || streak >= 0) && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {accuracy !== null && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-white/15 backdrop-blur px-2.5 py-1 text-xs font-medium border border-white/20">
+                      🔍 Precisión {accuracy}%
+                    </span>
+                  )}
+                  {accuracy !== null && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-white/15 backdrop-blur px-2.5 py-1 text-xs font-medium border border-white/20">
+                      Racha: {streak} {streakEmoji(streak)}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
             {user && myPosition && (
