@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { avatarUrl } from "@/lib/user-avatar";
 import { cn } from "@/lib/utils";
+import { RefreshCw } from "lucide-react";
 
 type Team = { id: string; name: string };
 
@@ -28,14 +29,18 @@ const Auth = () => {
   const [lastName, setLastName] = useState("");
   const [teamId, setTeamId] = useState<string>("");
   const [teams, setTeams] = useState<Team[]>([]);
-  const [avatarBase] = useState(() =>
-    typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
-  );
+  const generateBase = () =>
+    typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+  const [avatarBase, setAvatarBase] = useState(generateBase);
   const avatarSeeds = useMemo(
     () => Array.from({ length: 8 }, (_, i) => `${avatarBase}-${i + 1}`),
     [avatarBase],
   );
   const [selectedSeed, setSelectedSeed] = useState<string>(avatarSeeds[0]);
+
+  useEffect(() => {
+    setSelectedSeed(avatarSeeds[0]);
+  }, [avatarSeeds]);
 
   useEffect(() => {
     if (!loading && user) navigate("/", { replace: true });
@@ -192,7 +197,18 @@ const Auth = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Elegí tu avatar</Label>
+                    <div className="flex items-center justify-between">
+                      <Label>Elegí tu avatar</Label>
+                      <button
+                        type="button"
+                        onClick={() => setAvatarBase(generateBase())}
+                        aria-label="Generar nuevos avatares"
+                        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <RefreshCw className="h-3.5 w-3.5" />
+                        Nuevos
+                      </button>
+                    </div>
                     <div className="grid grid-cols-4 gap-2">
                       {avatarSeeds.map((seed) => {
                         const isSel = seed === selectedSeed;
