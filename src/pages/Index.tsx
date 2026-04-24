@@ -177,6 +177,27 @@ const Index = () => {
         map[p.match_id] = p as PredRow;
       });
       setPredsByMatch(map);
+
+      // Accuracy & streak: only over finished matches the user predicted
+      const finishedMatches = (finishedRes.data ?? []) as Array<{ id: string; match_date: string }>;
+      const resolved = finishedMatches
+        .map((m) => ({ m, p: map[m.id] }))
+        .filter((x) => x.p);
+
+      if (resolved.length === 0) {
+        setAccuracy(null);
+        setStreak(0);
+      } else {
+        const hits = resolved.filter((x) => (x.p.points_awarded ?? 0) > 0).length;
+        setAccuracy(Math.round((hits / resolved.length) * 100));
+        // streak counting backwards from most recent
+        let s = 0;
+        for (let i = resolved.length - 1; i >= 0; i--) {
+          if ((resolved[i].p.points_awarded ?? 0) > 0) s++;
+          else break;
+        }
+        setStreak(s);
+      }
     };
     load();
   }, [user]);
