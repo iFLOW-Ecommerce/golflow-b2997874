@@ -159,7 +159,7 @@ const Index = () => {
             Bienvenido al Prode Mundial 2026
           </h1>
           <p className="text-base opacity-90">
-            {user?.email ? `Hola, ${user.email}.` : ""} Predecí los partidos y competí con tus amigos.
+            {user ? `Hola, ${firstName(myProfile ?? { email: user.email ?? null })}.` : ""} Predecí los partidos y competí con tus amigos.
           </p>
         </section>
 
