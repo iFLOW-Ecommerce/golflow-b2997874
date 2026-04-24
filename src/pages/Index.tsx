@@ -50,17 +50,24 @@ const Index = () => {
   const { user } = useAuth();
   const [myPosition, setMyPosition] = useState<number | null>(null);
   const [myPoints, setMyPoints] = useState<number>(0);
-  const [myProfile, setMyProfile] = useState<{ first_name: string | null; last_name: string | null; email: string | null } | null>(null);
-  const [globalTotal, setGlobalTotal] = useState<number>(0);
-  const [myCurrentRank, setMyCurrentRank] = useState<number | null>(null);
-  const [myPreviousRank, setMyPreviousRank] = useState<number | null>(null);
-  const [myTeamName, setMyTeamName] = useState<string | null>(null);
-  const [myTeamId, setMyTeamId] = useState<string | null>(null);
-  const [myTeamPosition, setMyTeamPosition] = useState<number | null>(null);
-  const [myTeamTotal, setMyTeamTotal] = useState<number>(0);
-  const [myTeamCurrentRank, setMyTeamCurrentRank] = useState<number | null>(null);
-  const [myTeamPreviousRank, setMyTeamPreviousRank] = useState<number | null>(null);
-  const [rankingWindow, setRankingWindow] = useState<Array<{ position: number; user_id: string; email: string | null; first_name: string | null; last_name: string | null; avatar_seed: string | null; total_points: number; current_rank: number | null; previous_rank: number | null }>>([]);
+  const [myProfile, setMyProfile] = useState<{
+    first_name: string | null;
+    last_name: string | null;
+    email: string | null;
+  } | null>(null);
+  const [rankingWindow, setRankingWindow] = useState<
+    Array<{
+      position: number;
+      user_id: string;
+      email: string | null;
+      first_name: string | null;
+      last_name: string | null;
+      avatar_seed: string | null;
+      total_points: number;
+      current_rank: number | null;
+      previous_rank: number | null;
+    }>
+  >([]);
   const [upcoming, setUpcoming] = useState<MatchRow[]>([]);
   const [recent, setRecent] = useState<MatchRow[]>([]);
   const [predsByMatch, setPredsByMatch] = useState<Record<string, PredRow>>({});
@@ -76,7 +83,7 @@ const Index = () => {
       const [ranking, upcomingRes, recentRes, predsRes, profileRes] = await Promise.all([
         supabase
           .from("user_ranking" as any)
-          .select("user_id, email, first_name, last_name, avatar_seed, team_id, team_name, total_points, current_rank, previous_rank, team_current_rank, team_previous_rank")
+          .select("user_id, email, first_name, last_name, avatar_seed, total_points, current_rank, previous_rank")
           .order("total_points", { ascending: false })
           .order("email", { ascending: true }),
         supabase
@@ -96,43 +103,25 @@ const Index = () => {
           .from("predictions")
           .select("match_id, predicted_home_score, predicted_away_score, points_awarded")
           .eq("user_id", user.id),
-        supabase
-          .from("profiles")
-          .select("first_name, last_name, email")
-          .eq("user_id", user.id)
-          .maybeSingle(),
+        supabase.from("profiles").select("first_name, last_name, email").eq("user_id", user.id).maybeSingle(),
       ]);
 
       setMyProfile((profileRes.data as any) ?? null);
 
-      const rows = ((ranking.data ?? []) as unknown) as Array<{ user_id: string; email: string | null; first_name: string | null; last_name: string | null; avatar_seed: string | null; team_id: string | null; team_name: string | null; total_points: number; current_rank: number | null; previous_rank: number | null; team_current_rank: number | null; team_previous_rank: number | null }>;
-      setGlobalTotal(rows.length);
+      const rows = (ranking.data ?? []) as unknown as Array<{
+        user_id: string;
+        email: string | null;
+        first_name: string | null;
+        last_name: string | null;
+        avatar_seed: string | null;
+        total_points: number;
+        current_rank: number | null;
+        previous_rank: number | null;
+      }>;
       const idx = rows.findIndex((r) => r.user_id === user.id);
       if (idx >= 0) {
-        const me = rows[idx];
         setMyPosition(idx + 1);
-        setMyPoints(me.total_points ?? 0);
-        setMyCurrentRank(me.current_rank);
-        setMyPreviousRank(me.previous_rank);
-        setMyTeamId(me.team_id);
-        setMyTeamName(me.team_name);
-        setMyTeamCurrentRank(me.team_current_rank);
-        setMyTeamPreviousRank(me.team_previous_rank);
-
-        if (me.team_id) {
-          const teamRows = rows
-            .filter((r) => r.team_id === me.team_id)
-            .sort((a, b) => {
-              if ((b.total_points ?? 0) !== (a.total_points ?? 0)) return (b.total_points ?? 0) - (a.total_points ?? 0);
-              return (a.email ?? "").localeCompare(b.email ?? "");
-            });
-          setMyTeamTotal(teamRows.length);
-          const tIdx = teamRows.findIndex((r) => r.user_id === user.id);
-          setMyTeamPosition(tIdx >= 0 ? tIdx + 1 : null);
-        } else {
-          setMyTeamTotal(0);
-          setMyTeamPosition(null);
-        }
+        setMyPoints(rows[idx].total_points ?? 0);
 
         let start = idx - 2;
         let end = idx + 2;
@@ -181,83 +170,29 @@ const Index = () => {
           className="rounded-2xl p-6 md:p-10 text-primary-foreground shadow-elegant"
           style={{ background: "var(--gradient-hero)" }}
         >
-          <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
-            <div className="min-w-0">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 backdrop-blur">
-                  <Trophy className="h-5 w-5" />
-                </div>
-                <span className="text-sm font-medium opacity-90">Mundial 2026</span>
-              </div>
-              <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">
-                Bienvenido al Prode Mundial 2026
-              </h1>
-              <p className="text-base opacity-90">
-                {user ? `Hola, ${firstName(myProfile ?? { email: user.email ?? null })}.` : ""} Predecí los partidos y competí con tus amigos.
-              </p>
-              {user && upcoming.length > 0 && (() => {
-                const missing = upcoming.filter((m) => !predsByMatch[m.id]).length;
-                return (
-                  <p className="text-sm opacity-90 mt-2">
-                    {missing === 0 ? (
-                      "🏖️ Estás al día con tus predicciones"
-                    ) : (
-                      <>
-                        🎯 Te faltan{" "}
-                        <span className="font-bold bg-white/20 px-1.5 py-0.5 rounded-md text-primary-foreground">
-                          {missing} {missing === 1 ? "predicción" : "predicciones"}
-                        </span>{" "}
-                        para estar al día
-                      </>
-                    )}
-                  </p>
-                );
-              })()}
+          <div className="flex items-center gap-3 mb-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 backdrop-blur">
+              <Trophy className="h-5 w-5" />
             </div>
-
-            {user && myPosition && (
-              <div className="grid grid-cols-2 md:grid-cols-1 gap-3 md:w-[200px]">
-                {/* Global */}
-                <div className="rounded-xl bg-white/10 backdrop-blur p-3 border border-white/15">
-                  <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide opacity-90 font-medium">
-                    <span>🌐</span>
-                    <span>Global</span>
-                  </div>
-                  <div className="mt-1.5 flex items-baseline gap-1.5">
-                    <span className="text-2xl font-bold leading-none">#{myPosition}</span>
-                    <span className="text-xs opacity-80">de {globalTotal}</span>
-                  </div>
-                  <div className="mt-1.5 flex items-center gap-1.5 text-xs">
-                    <span className="font-semibold">{myPoints} pts</span>
-                    <TrendBadge current={myCurrentRank} previous={myPreviousRank} />
-                  </div>
-                </div>
-
-                {/* Team */}
-                <div className="rounded-xl bg-white/15 backdrop-blur p-3 border border-white/20">
-                  <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide opacity-90 font-medium">
-                    <span>⭐</span>
-                    <span className="truncate">{myTeamName ?? "Sin equipo"}</span>
-                  </div>
-                  {myTeamId && myTeamPosition ? (
-                    <>
-                      <div className="mt-1.5 flex items-baseline gap-1.5">
-                        <span className="text-2xl font-bold leading-none">#{myTeamPosition}</span>
-                        <span className="text-xs opacity-80">de {myTeamTotal}</span>
-                      </div>
-                      <div className="mt-1.5 flex items-center gap-1.5 text-xs">
-                        <TrendBadge current={myTeamCurrentRank} previous={myTeamPreviousRank} />
-                      </div>
-                    </>
-                  ) : (
-                    <p className="mt-1.5 text-xs opacity-80">
-                      {myTeamId ? "Sin posición aún." : "Sin equipo asignado."}
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
+            <span className="text-sm font-medium opacity-90">Mundial 2026</span>
           </div>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">Bienvenido al Prode Mundial 2026</h1>
+          <p className="text-base opacity-90">
+            {user ? `Hola, ${firstName(myProfile ?? { email: user.email ?? null })}.` : ""} Predecí los partidos y
+            competí con tus amigos.
+          </p>
+          {user &&
+            upcoming.length > 0 &&
+            (() => {
+              const missing = upcoming.filter((m) => !predsByMatch[m.id]).length;
+              return (
+                <p className="text-sm opacity-90 mt-2">
+                  {missing === 0
+                    ? "Estás al día con tus predicciones 😎"
+                    : `Te faltan ${missing} ${missing === 1 ? "predicción" : "predicciones"} para estar al día 🚨`}
+                </p>
+              );
+            })()}
         </section>
 
         <Card className="shadow-card">
@@ -338,15 +273,11 @@ const Index = () => {
                         isMe ? "bg-primary/10 border-l-2 border-l-primary font-semibold" : ""
                       }`}
                     >
-                      <span className="w-8 shrink-0 text-xs text-muted-foreground tabular-nums">
-                        #{r.position}
-                      </span>
+                      <span className="w-8 shrink-0 text-xs text-muted-foreground tabular-nums">#{r.position}</span>
                       <UserAvatar seed={r.avatar_seed} name={name} className="h-7 w-7" />
                       <span className="flex-1 min-w-0 truncate">{name}</span>
                       <span className="shrink-0 text-xs tabular-nums flex items-center gap-2">
-                        <span className={isMe ? "text-primary" : "text-muted-foreground"}>
-                          {r.total_points} pts
-                        </span>
+                        <span className={isMe ? "text-primary" : "text-muted-foreground"}>{r.total_points} pts</span>
                         <TrendBadge current={r.current_rank} previous={r.previous_rank} />
                       </span>
                     </li>
@@ -400,9 +331,7 @@ const Index = () => {
                             <span className="font-semibold text-foreground">
                               {pred.predicted_home_score} - {pred.predicted_away_score}
                             </span>{" "}
-                            <span className="font-semibold text-primary">
-                              +{pred.points_awarded ?? 0} pts
-                            </span>
+                            <span className="font-semibold text-primary">+{pred.points_awarded ?? 0} pts</span>
                           </>
                         )}
                       </span>
