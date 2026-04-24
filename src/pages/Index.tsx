@@ -233,7 +233,7 @@ const Index = () => {
               <ul className="divide-y divide-border rounded-lg border bg-card overflow-hidden">
                 {rankingWindow.map((r) => {
                   const isMe = r.user_id === user?.id;
-                  const name = r.email ? r.email.split("@")[0] : "—";
+                  const name = displayName(r);
                   return (
                     <li
                       key={r.user_id}
@@ -244,6 +244,7 @@ const Index = () => {
                       <span className="w-8 shrink-0 text-xs text-muted-foreground tabular-nums">
                         #{r.position}
                       </span>
+                      <UserAvatar seed={r.avatar_seed} name={name} className="h-7 w-7" />
                       <span className="flex-1 min-w-0 truncate">{name}</span>
                       <span className="shrink-0 text-xs tabular-nums flex items-center gap-2">
                         <span className={isMe ? "text-primary" : "text-muted-foreground"}>
