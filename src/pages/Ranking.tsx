@@ -173,12 +173,18 @@ const Ranking = () => {
                   <span>Global</span>
                 </div>
                 {myGlobalPosition ? (
-                  <div className="mt-2 flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-foreground">#{myGlobalPosition}</span>
-                    <span className="text-sm text-muted-foreground">
-                      · <span className="font-semibold text-foreground">{myRow.total_points}</span> pts
-                    </span>
-                  </div>
+                  <>
+                    <div className="mt-2 flex items-baseline gap-2">
+                      <span className="text-3xl font-bold text-foreground">#{myGlobalPosition}</span>
+                      <span className="text-sm text-muted-foreground">
+                        de <span className="font-semibold text-foreground">{globalSorted.length}</span>
+                      </span>
+                    </div>
+                    <div className="mt-2 flex items-center gap-2 text-sm">
+                      <span className="font-semibold text-foreground">{myRow.total_points} pts</span>
+                      <TrendBadge current={myRow.current_rank} previous={myRow.previous_rank} />
+                    </div>
+                  </>
                 ) : (
                   <p className="mt-2 text-sm text-muted-foreground">Sin posición aún.</p>
                 )}
@@ -191,12 +197,17 @@ const Ranking = () => {
                   <span className="truncate">Equipo · {myRow.team_name ?? "Sin equipo"}</span>
                 </div>
                 {myRow.team_id && myTeamPosition ? (
-                  <div className="mt-2 flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-primary">#{myTeamPosition}</span>
-                    <span className="text-sm text-muted-foreground">
-                      de <span className="font-semibold text-foreground">{teamSorted.length}</span>
-                    </span>
-                  </div>
+                  <>
+                    <div className="mt-2 flex items-baseline gap-2">
+                      <span className="text-3xl font-bold text-primary">#{myTeamPosition}</span>
+                      <span className="text-sm text-muted-foreground">
+                        de <span className="font-semibold text-foreground">{teamSorted.length}</span>
+                      </span>
+                    </div>
+                    <div className="mt-2 flex items-center gap-2 text-sm">
+                      <TrendBadge current={myRow.team_current_rank} previous={myRow.team_previous_rank} />
+                    </div>
+                  </>
                 ) : (
                   <p className="mt-2 text-sm text-muted-foreground">
                     {myRow.team_id ? "Sin posición aún." : "Aún no perteneces a un equipo."}
