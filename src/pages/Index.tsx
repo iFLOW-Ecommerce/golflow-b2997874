@@ -256,6 +256,20 @@ const Index = () => {
                   </p>
                 );
               })()}
+              {user && (accuracy !== null || streak >= 0) && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {accuracy !== null && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-white/15 backdrop-blur px-2.5 py-1 text-xs font-medium border border-white/20">
+                      🔍 Precisión {accuracy}%
+                    </span>
+                  )}
+                  {accuracy !== null && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-white/15 backdrop-blur px-2.5 py-1 text-xs font-medium border border-white/20">
+                      Racha: {streak} {streakEmoji(streak)}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
             {user && myPosition && (
