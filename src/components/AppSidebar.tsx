@@ -32,15 +32,23 @@ export function AppSidebar() {
   const location = useLocation();
   const { signOut, user } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [profile, setProfile] = useState<{ first_name: string | null; last_name: string | null; email: string | null; avatar_seed: string | null } | null>(null);
 
   useEffect(() => {
-    if (!user) return setIsAdmin(false);
+    if (!user) {
+      setIsAdmin(false);
+      setProfile(null);
+      return;
+    }
     supabase
       .from("profiles")
-      .select("is_admin")
+      .select("is_admin, first_name, last_name, email, avatar_seed")
       .eq("user_id", user.id)
       .maybeSingle()
-      .then(({ data }) => setIsAdmin(!!data?.is_admin));
+      .then(({ data }) => {
+        setIsAdmin(!!(data as any)?.is_admin);
+        setProfile((data as any) ?? null);
+      });
   }, [user]);
 
   const items = isAdmin
