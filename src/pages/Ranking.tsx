@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { BarChart3 } from "lucide-react";
@@ -18,17 +19,24 @@ interface RankingRow {
   first_name: string | null;
   last_name: string | null;
   avatar_seed: string | null;
+  team_id: string | null;
   team_name: string | null;
   total_points: number;
   predictions_count: number;
   current_rank: number | null;
   previous_rank: number | null;
+  team_current_rank: number | null;
+  team_previous_rank: number | null;
 }
+
+const GLOBAL = "__global__";
 
 const Ranking = () => {
   const { user } = useAuth();
   const [rows, setRows] = useState<RankingRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [scope, setScope] = useState<string>(GLOBAL);
+  const [scopeReady, setScopeReady] = useState(false);
 
   useEffect(() => {
     document.title = "Ranking | Prode Mundial 2026";
@@ -39,7 +47,7 @@ const Ranking = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from("user_ranking" as any)
-        .select("user_id, email, first_name, last_name, avatar_seed, team_name, total_points, predictions_count, current_rank, previous_rank")
+        .select("user_id, email, first_name, last_name, avatar_seed, team_id, team_name, total_points, predictions_count, current_rank, previous_rank, team_current_rank, team_previous_rank")
         .order("total_points", { ascending: false })
         .order("email", { ascending: true });
       if (!error && data) setRows(data as unknown as RankingRow[]);
@@ -48,9 +56,51 @@ const Ranking = () => {
     load();
   }, []);
 
-  const myIndex = rows.findIndex((r) => r.user_id === user?.id);
-  const me = myIndex >= 0 ? rows[myIndex] : null;
+  // Default scope to user's team once data is loaded
+  const myRow = useMemo(() => rows.find((r) => r.user_id === user?.id) ?? null, [rows, user?.id]);
+  useEffect(() => {
+    if (scopeReady || loading) return;
+    if (myRow?.team_id) setScope(myRow.team_id);
+    setScopeReady(true);
+  }, [loading, myRow, scopeReady]);
+
+  // Build team list (sorted; user's team first)
+  const teams = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const r of rows) {
+      if (r.team_id && r.team_name) map.set(r.team_id, r.team_name);
+    }
+    const arr = Array.from(map.entries()).map(([id, name]) => ({ id, name }));
+    arr.sort((a, b) => a.name.localeCompare(b.name));
+    if (myRow?.team_id) {
+      const idx = arr.findIndex((t) => t.id === myRow.team_id);
+      if (idx > 0) {
+        const [mine] = arr.splice(idx, 1);
+        arr.unshift(mine);
+      }
+    }
+    return arr;
+  }, [rows, myRow?.team_id]);
+
+  const isGlobal = scope === GLOBAL;
+
+  const filtered = useMemo(() => {
+    if (isGlobal) return rows;
+    return rows
+      .filter((r) => r.team_id === scope)
+      .sort((a, b) => {
+        if (b.total_points !== a.total_points) return b.total_points - a.total_points;
+        return (a.email ?? "").localeCompare(b.email ?? "");
+      });
+  }, [rows, scope, isGlobal]);
+
+  const myIndex = filtered.findIndex((r) => r.user_id === user?.id);
+  const me = myIndex >= 0 ? filtered[myIndex] : null;
   const myPosition = myIndex >= 0 ? myIndex + 1 : null;
+
+  const scopeLabel = isGlobal
+    ? "Ranking global"
+    : `Equipo: ${teams.find((t) => t.id === scope)?.name ?? "—"}`;
 
   const displayName = (row: RankingRow) => fmtName(row);
 
@@ -61,9 +111,11 @@ const Ranking = () => {
     return <span className="font-semibold">#{pos}</span>;
   };
 
-  const trendCell = (current: number | null, previous: number | null) => (
-    <TrendBadge current={current} previous={previous} />
-  );
+  const trendCell = (row: RankingRow) => {
+    const current = isGlobal ? row.current_rank : row.team_current_rank;
+    const previous = isGlobal ? row.previous_rank : row.team_previous_rank;
+    return <TrendBadge current={current} previous={previous} />;
+  };
 
   const rowClassFor = (pos: number, isMe: boolean) => {
     const base: string[] = [];
@@ -73,6 +125,9 @@ const Ranking = () => {
     if (isMe) base.push("ring-2 ring-inset ring-primary bg-primary/10 hover:bg-primary/15");
     return cn(...base);
   };
+
+  const otherTeams = myRow?.team_id ? teams.filter((t) => t.id !== myRow.team_id) : teams;
+  const myTeam = myRow?.team_id ? teams.find((t) => t.id === myRow.team_id) : null;
 
   return (
     <AppLayout>
@@ -95,10 +150,11 @@ const Ranking = () => {
                 {myPosition ? (
                   <>
                     Estás en el puesto <span className="font-semibold text-foreground">#{myPosition}</span>{" "}
-                    con <span className="font-semibold text-foreground">{me.total_points}</span> puntos.
+                    con <span className="font-semibold text-foreground">{me.total_points}</span> puntos
+                    {" "}en {isGlobal ? "el ranking global" : `tu equipo (${myTeam?.name ?? "—"})`}.
                   </>
                 ) : (
-                  "Aún no apareces en el ranking."
+                  "Aún no apareces en este ranking."
                 )}
               </CardDescription>
             </CardHeader>
@@ -107,8 +163,36 @@ const Ranking = () => {
 
         <Card className="shadow-card">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Clasificación general</CardTitle>
-            <CardDescription>Los puntos se actualizan cuando se cargan resultados reales.</CardDescription>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <CardTitle className="text-base">{scopeLabel}</CardTitle>
+                <CardDescription>Los puntos se actualizan cuando se cargan resultados reales.</CardDescription>
+              </div>
+              <div className="w-full sm:w-64">
+                <Select value={scope} onValueChange={setScope}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Elegí un ranking" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={GLOBAL}>🌐 Global</SelectItem>
+                    {myTeam && (
+                      <SelectGroup>
+                        <SelectLabel>Mi equipo</SelectLabel>
+                        <SelectItem value={myTeam.id}>⭐ {myTeam.name}</SelectItem>
+                      </SelectGroup>
+                    )}
+                    {otherTeams.length > 0 && (
+                      <SelectGroup>
+                        <SelectLabel>Otros equipos</SelectLabel>
+                        {otherTeams.map((t) => (
+                          <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                        ))}
+                      </SelectGroup>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -117,9 +201,9 @@ const Ranking = () => {
                   <Skeleton key={i} className="h-10 w-full" />
                 ))}
               </div>
-            ) : rows.length === 0 ? (
+            ) : filtered.length === 0 ? (
               <p className="text-sm text-muted-foreground py-6 text-center">
-                Todavía no hay jugadores en el ranking.
+                Todavía no hay jugadores en este ranking.
               </p>
             ) : (
               <Table>
@@ -127,13 +211,13 @@ const Ranking = () => {
                   <TableRow>
                     <TableHead className="w-16">#</TableHead>
                     <TableHead>Usuario</TableHead>
-                    <TableHead className="hidden sm:table-cell">Equipo</TableHead>
+                    {isGlobal && <TableHead className="hidden sm:table-cell">Equipo</TableHead>}
                     <TableHead className="text-right">Puntos</TableHead>
                     <TableHead className="w-20 text-center">Tend.</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {rows.map((row, idx) => {
+                  {filtered.map((row, idx) => {
                     const pos = idx + 1;
                     const isMe = row.user_id === user?.id;
                     const name = displayName(row);
@@ -147,13 +231,13 @@ const Ranking = () => {
                             {isMe && <Badge variant="secondary" className="text-xs shrink-0">Tú</Badge>}
                           </div>
                         </TableCell>
-                        <TableCell className="hidden sm:table-cell text-sm text-muted-foreground truncate max-w-[180px]">
-                          {row.team_name ?? "—"}
-                        </TableCell>
+                        {isGlobal && (
+                          <TableCell className="hidden sm:table-cell text-sm text-muted-foreground truncate max-w-[180px]">
+                            {row.team_name ?? "—"}
+                          </TableCell>
+                        )}
                         <TableCell className="text-right font-semibold">{row.total_points}</TableCell>
-                        <TableCell className="text-center">
-                          {trendCell(row.current_rank, row.previous_rank)}
-                        </TableCell>
+                        <TableCell className="text-center">{trendCell(row)}</TableCell>
                       </TableRow>
                     );
                   })}
