@@ -64,6 +64,8 @@ const Index = () => {
   const [upcoming, setUpcoming] = useState<MatchRow[]>([]);
   const [recent, setRecent] = useState<MatchRow[]>([]);
   const [predsByMatch, setPredsByMatch] = useState<Record<string, PredRow>>({});
+  const [accuracy, setAccuracy] = useState<number | null>(null);
+  const [streak, setStreak] = useState<number>(0);
 
   useEffect(() => {
     document.title = "Inicio | Prode Mundial 2026";
