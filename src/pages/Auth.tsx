@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { avatarUrl } from "@/lib/user-avatar";
 import { cn } from "@/lib/utils";
+import { RefreshCw } from "lucide-react";
 
 type Team = { id: string; name: string };
 
