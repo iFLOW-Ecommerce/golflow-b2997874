@@ -186,6 +186,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_team_ranks: {
+        Row: {
+          current_rank: number | null
+          previous_rank: number | null
+          team_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          current_rank?: number | null
+          previous_rank?: number | null
+          team_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          current_rank?: number | null
+          previous_rank?: number | null
+          team_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       user_ranking: {
@@ -197,11 +221,22 @@ export type Database = {
           last_name: string | null
           predictions_count: number | null
           previous_rank: number | null
+          team_current_rank: number | null
+          team_id: string | null
           team_name: string | null
+          team_previous_rank: number | null
           total_points: number | null
           user_id: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
@@ -214,7 +249,9 @@ export type Database = {
         }
         Returns: number
       }
+      recalculate_team_ranks: { Args: never; Returns: undefined }
       recalculate_user_ranks: { Args: never; Returns: undefined }
+      snapshot_team_ranks: { Args: never; Returns: undefined }
       snapshot_user_ranks: { Args: never; Returns: undefined }
       stage_multiplier: { Args: { _stage: string }; Returns: number }
     }
