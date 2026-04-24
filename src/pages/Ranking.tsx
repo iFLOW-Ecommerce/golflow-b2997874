@@ -9,10 +9,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TrendBadge } from "@/lib/trend-badge";
+import { UserAvatar } from "@/lib/user-avatar";
+import { displayName as fmtName } from "@/lib/display-name";
 
 interface RankingRow {
   user_id: string;
   email: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  avatar_seed: string | null;
+  team_name: string | null;
   total_points: number;
   predictions_count: number;
   current_rank: number | null;
