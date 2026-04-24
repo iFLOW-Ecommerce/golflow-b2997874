@@ -64,10 +64,10 @@ const Index = () => {
     if (!user) return;
     const load = async () => {
       const nowIso = new Date().toISOString();
-      const [ranking, upcomingRes, recentRes, predsRes] = await Promise.all([
+      const [ranking, upcomingRes, recentRes, predsRes, profileRes] = await Promise.all([
         supabase
           .from("user_ranking" as any)
-          .select("user_id, email, total_points, current_rank, previous_rank")
+          .select("user_id, email, first_name, last_name, avatar_seed, total_points, current_rank, previous_rank")
           .order("total_points", { ascending: false })
           .order("email", { ascending: true }),
         supabase
@@ -87,9 +87,16 @@ const Index = () => {
           .from("predictions")
           .select("match_id, predicted_home_score, predicted_away_score, points_awarded")
           .eq("user_id", user.id),
+        supabase
+          .from("profiles")
+          .select("first_name, last_name, email")
+          .eq("user_id", user.id)
+          .maybeSingle(),
       ]);
 
-      const rows = ((ranking.data ?? []) as unknown) as Array<{ user_id: string; email: string | null; total_points: number; current_rank: number | null; previous_rank: number | null }>;
+      setMyProfile((profileRes.data as any) ?? null);
+
+      const rows = ((ranking.data ?? []) as unknown) as Array<{ user_id: string; email: string | null; first_name: string | null; last_name: string | null; avatar_seed: string | null; total_points: number; current_rank: number | null; previous_rank: number | null }>;
       const idx = rows.findIndex((r) => r.user_id === user.id);
       if (idx >= 0) {
         setMyPosition(idx + 1);
@@ -109,6 +116,9 @@ const Index = () => {
           position: start + i + 1,
           user_id: r.user_id,
           email: r.email,
+          first_name: r.first_name,
+          last_name: r.last_name,
+          avatar_seed: r.avatar_seed,
           total_points: r.total_points ?? 0,
           current_rank: r.current_rank,
           previous_rank: r.previous_rank,
