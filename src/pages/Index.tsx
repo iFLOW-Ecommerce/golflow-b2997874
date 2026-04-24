@@ -76,7 +76,7 @@ const Index = () => {
       const [ranking, upcomingRes, recentRes, predsRes, profileRes] = await Promise.all([
         supabase
           .from("user_ranking" as any)
-          .select("user_id, email, first_name, last_name, avatar_seed, total_points, current_rank, previous_rank")
+          .select("user_id, email, first_name, last_name, avatar_seed, team_id, team_name, total_points, current_rank, previous_rank, team_current_rank, team_previous_rank")
           .order("total_points", { ascending: false })
           .order("email", { ascending: true }),
         supabase
@@ -105,11 +105,34 @@ const Index = () => {
 
       setMyProfile((profileRes.data as any) ?? null);
 
-      const rows = ((ranking.data ?? []) as unknown) as Array<{ user_id: string; email: string | null; first_name: string | null; last_name: string | null; avatar_seed: string | null; total_points: number; current_rank: number | null; previous_rank: number | null }>;
+      const rows = ((ranking.data ?? []) as unknown) as Array<{ user_id: string; email: string | null; first_name: string | null; last_name: string | null; avatar_seed: string | null; team_id: string | null; team_name: string | null; total_points: number; current_rank: number | null; previous_rank: number | null; team_current_rank: number | null; team_previous_rank: number | null }>;
+      setGlobalTotal(rows.length);
       const idx = rows.findIndex((r) => r.user_id === user.id);
       if (idx >= 0) {
+        const me = rows[idx];
         setMyPosition(idx + 1);
-        setMyPoints(rows[idx].total_points ?? 0);
+        setMyPoints(me.total_points ?? 0);
+        setMyCurrentRank(me.current_rank);
+        setMyPreviousRank(me.previous_rank);
+        setMyTeamId(me.team_id);
+        setMyTeamName(me.team_name);
+        setMyTeamCurrentRank(me.team_current_rank);
+        setMyTeamPreviousRank(me.team_previous_rank);
+
+        if (me.team_id) {
+          const teamRows = rows
+            .filter((r) => r.team_id === me.team_id)
+            .sort((a, b) => {
+              if ((b.total_points ?? 0) !== (a.total_points ?? 0)) return (b.total_points ?? 0) - (a.total_points ?? 0);
+              return (a.email ?? "").localeCompare(b.email ?? "");
+            });
+          setMyTeamTotal(teamRows.length);
+          const tIdx = teamRows.findIndex((r) => r.user_id === user.id);
+          setMyTeamPosition(tIdx >= 0 ? tIdx + 1 : null);
+        } else {
+          setMyTeamTotal(0);
+          setMyTeamPosition(null);
+        }
 
         let start = idx - 2;
         let end = idx + 2;
