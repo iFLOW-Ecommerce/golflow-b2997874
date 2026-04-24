@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { MultiplierBadge } from "@/lib/multiplier";
 import { TeamName } from "@/lib/country-flag";
 import { TrendBadge } from "@/lib/trend-badge";
+import { UserAvatar } from "@/lib/user-avatar";
+import { displayName, firstName } from "@/lib/display-name";
 
 const KNOCKOUT_STAGES = ["round_of_32", "round_of_16", "quarterfinal", "semifinal", "final"];
 
@@ -48,7 +50,8 @@ const Index = () => {
   const { user } = useAuth();
   const [myPosition, setMyPosition] = useState<number | null>(null);
   const [myPoints, setMyPoints] = useState<number>(0);
-  const [rankingWindow, setRankingWindow] = useState<Array<{ position: number; user_id: string; email: string | null; total_points: number; current_rank: number | null; previous_rank: number | null }>>([]);
+  const [myProfile, setMyProfile] = useState<{ first_name: string | null; last_name: string | null; email: string | null } | null>(null);
+  const [rankingWindow, setRankingWindow] = useState<Array<{ position: number; user_id: string; email: string | null; first_name: string | null; last_name: string | null; avatar_seed: string | null; total_points: number; current_rank: number | null; previous_rank: number | null }>>([]);
   const [upcoming, setUpcoming] = useState<MatchRow[]>([]);
   const [recent, setRecent] = useState<MatchRow[]>([]);
   const [predsByMatch, setPredsByMatch] = useState<Record<string, PredRow>>({});
@@ -61,10 +64,10 @@ const Index = () => {
     if (!user) return;
     const load = async () => {
       const nowIso = new Date().toISOString();
-      const [ranking, upcomingRes, recentRes, predsRes] = await Promise.all([
+      const [ranking, upcomingRes, recentRes, predsRes, profileRes] = await Promise.all([
         supabase
           .from("user_ranking" as any)
-          .select("user_id, email, total_points, current_rank, previous_rank")
+          .select("user_id, email, first_name, last_name, avatar_seed, total_points, current_rank, previous_rank")
           .order("total_points", { ascending: false })
           .order("email", { ascending: true }),
         supabase
@@ -84,9 +87,16 @@ const Index = () => {
           .from("predictions")
           .select("match_id, predicted_home_score, predicted_away_score, points_awarded")
           .eq("user_id", user.id),
+        supabase
+          .from("profiles")
+          .select("first_name, last_name, email")
+          .eq("user_id", user.id)
+          .maybeSingle(),
       ]);
 
-      const rows = ((ranking.data ?? []) as unknown) as Array<{ user_id: string; email: string | null; total_points: number; current_rank: number | null; previous_rank: number | null }>;
+      setMyProfile((profileRes.data as any) ?? null);
+
+      const rows = ((ranking.data ?? []) as unknown) as Array<{ user_id: string; email: string | null; first_name: string | null; last_name: string | null; avatar_seed: string | null; total_points: number; current_rank: number | null; previous_rank: number | null }>;
       const idx = rows.findIndex((r) => r.user_id === user.id);
       if (idx >= 0) {
         setMyPosition(idx + 1);
@@ -106,6 +116,9 @@ const Index = () => {
           position: start + i + 1,
           user_id: r.user_id,
           email: r.email,
+          first_name: r.first_name,
+          last_name: r.last_name,
+          avatar_seed: r.avatar_seed,
           total_points: r.total_points ?? 0,
           current_rank: r.current_rank,
           previous_rank: r.previous_rank,
@@ -146,7 +159,7 @@ const Index = () => {
             Bienvenido al Prode Mundial 2026
           </h1>
           <p className="text-base opacity-90">
-            {user?.email ? `Hola, ${user.email}.` : ""} Predecí los partidos y competí con tus amigos.
+            {user ? `Hola, ${firstName(myProfile ?? { email: user.email ?? null })}.` : ""} Predecí los partidos y competí con tus amigos.
           </p>
         </section>
 
@@ -220,7 +233,7 @@ const Index = () => {
               <ul className="divide-y divide-border rounded-lg border bg-card overflow-hidden">
                 {rankingWindow.map((r) => {
                   const isMe = r.user_id === user?.id;
-                  const name = r.email ? r.email.split("@")[0] : "—";
+                  const name = displayName(r);
                   return (
                     <li
                       key={r.user_id}
@@ -231,6 +244,7 @@ const Index = () => {
                       <span className="w-8 shrink-0 text-xs text-muted-foreground tabular-nums">
                         #{r.position}
                       </span>
+                      <UserAvatar seed={r.avatar_seed} name={name} className="h-7 w-7" />
                       <span className="flex-1 min-w-0 truncate">{name}</span>
                       <span className="shrink-0 text-xs tabular-nums flex items-center gap-2">
                         <span className={isMe ? "text-primary" : "text-muted-foreground"}>

@@ -9,10 +9,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TrendBadge } from "@/lib/trend-badge";
+import { UserAvatar } from "@/lib/user-avatar";
+import { displayName as fmtName } from "@/lib/display-name";
 
 interface RankingRow {
   user_id: string;
   email: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  avatar_seed: string | null;
+  team_name: string | null;
   total_points: number;
   predictions_count: number;
   current_rank: number | null;
@@ -33,7 +39,7 @@ const Ranking = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from("user_ranking" as any)
-        .select("user_id, email, total_points, predictions_count, current_rank, previous_rank")
+        .select("user_id, email, first_name, last_name, avatar_seed, team_name, total_points, predictions_count, current_rank, previous_rank")
         .order("total_points", { ascending: false })
         .order("email", { ascending: true });
       if (!error && data) setRows(data as unknown as RankingRow[]);
@@ -46,8 +52,7 @@ const Ranking = () => {
   const me = myIndex >= 0 ? rows[myIndex] : null;
   const myPosition = myIndex >= 0 ? myIndex + 1 : null;
 
-  const displayName = (email: string | null) =>
-    email ? email.split("@")[0] : "Usuario";
+  const displayName = (row: RankingRow) => fmtName(row);
 
   const positionCell = (pos: number) => {
     if (pos === 1) return <span className="text-xl" aria-label="Primero">🥇</span>;
@@ -122,6 +127,7 @@ const Ranking = () => {
                   <TableRow>
                     <TableHead className="w-16">#</TableHead>
                     <TableHead>Usuario</TableHead>
+                    <TableHead className="hidden sm:table-cell">Equipo</TableHead>
                     <TableHead className="text-right">Puntos</TableHead>
                     <TableHead className="w-20 text-center">Tend.</TableHead>
                   </TableRow>
@@ -130,14 +136,19 @@ const Ranking = () => {
                   {rows.map((row, idx) => {
                     const pos = idx + 1;
                     const isMe = row.user_id === user?.id;
+                    const name = displayName(row);
                     return (
                       <TableRow key={row.user_id} className={rowClassFor(pos, isMe)}>
                         <TableCell>{positionCell(pos)}</TableCell>
-                        <TableCell className="truncate max-w-[180px] sm:max-w-none">
-                          <div className="flex items-center gap-2">
-                            <span className={cn(isMe && "font-semibold")}>{displayName(row.email)}</span>
-                            {isMe && <Badge variant="secondary" className="text-xs">Tú</Badge>}
+                        <TableCell className="truncate max-w-[200px] sm:max-w-none">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <UserAvatar seed={row.avatar_seed} name={name} className="h-7 w-7 shrink-0" />
+                            <span className={cn("truncate", isMe && "font-semibold")}>{name}</span>
+                            {isMe && <Badge variant="secondary" className="text-xs shrink-0">Tú</Badge>}
                           </div>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell text-sm text-muted-foreground truncate max-w-[180px]">
+                          {row.team_name ?? "—"}
                         </TableCell>
                         <TableCell className="text-right font-semibold">{row.total_points}</TableCell>
                         <TableCell className="text-center">

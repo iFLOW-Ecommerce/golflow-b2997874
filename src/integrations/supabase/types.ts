@@ -102,28 +102,66 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_seed: string | null
           created_at: string
           email: string | null
+          first_name: string | null
           id: string
           is_admin: boolean
+          last_name: string | null
+          team_id: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          avatar_seed?: string | null
           created_at?: string
           email?: string | null
+          first_name?: string | null
           id?: string
           is_admin?: boolean
+          last_name?: string | null
+          team_id?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          avatar_seed?: string | null
           created_at?: string
           email?: string | null
+          first_name?: string | null
           id?: string
           is_admin?: boolean
+          last_name?: string | null
+          team_id?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teams: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
         }
         Relationships: []
       }
@@ -152,10 +190,14 @@ export type Database = {
     Views: {
       user_ranking: {
         Row: {
+          avatar_seed: string | null
           current_rank: number | null
           email: string | null
+          first_name: string | null
+          last_name: string | null
           predictions_count: number | null
           previous_rank: number | null
+          team_name: string | null
           total_points: number | null
           user_id: string | null
         }

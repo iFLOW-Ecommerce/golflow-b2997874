@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { UserAvatar } from "@/lib/user-avatar";
+import { displayName } from "@/lib/display-name";
 
 const baseItems = [
   { title: "Inicio", url: "/", icon: Trophy },
@@ -30,15 +32,23 @@ export function AppSidebar() {
   const location = useLocation();
   const { signOut, user } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [profile, setProfile] = useState<{ first_name: string | null; last_name: string | null; email: string | null; avatar_seed: string | null } | null>(null);
 
   useEffect(() => {
-    if (!user) return setIsAdmin(false);
+    if (!user) {
+      setIsAdmin(false);
+      setProfile(null);
+      return;
+    }
     supabase
       .from("profiles")
-      .select("is_admin")
+      .select("is_admin, first_name, last_name, email, avatar_seed")
       .eq("user_id", user.id)
       .maybeSingle()
-      .then(({ data }) => setIsAdmin(!!data?.is_admin));
+      .then(({ data }) => {
+        setIsAdmin(!!(data as any)?.is_admin);
+        setProfile((data as any) ?? null);
+      });
   }, [user]);
 
   const items = isAdmin
@@ -85,8 +95,19 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-2">
-        {!collapsed && user?.email && (
-          <p className="px-2 pb-1 text-xs text-sidebar-foreground/70 truncate">{user.email}</p>
+        {user && (
+          <div className="flex items-center gap-2 px-2 pb-2">
+            <UserAvatar
+              seed={profile?.avatar_seed ?? null}
+              name={displayName(profile ?? { email: user.email ?? null })}
+              className="h-7 w-7 shrink-0"
+            />
+            {!collapsed && (
+              <p className="text-xs font-medium text-sidebar-foreground truncate">
+                {displayName(profile ?? { email: user.email ?? null })}
+              </p>
+            )}
+          </div>
         )}
         <SidebarMenu>
           <SidebarMenuItem>
