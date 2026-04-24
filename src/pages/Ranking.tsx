@@ -165,7 +165,11 @@ const Ranking = () => {
 
         {myRow && (
           <Card className="shadow-card border-primary/30 overflow-hidden">
-            <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-border">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Tu posición</CardTitle>
+            </CardHeader>
+            <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-border border-t">
+
               {/* Global */}
               <div className="p-5 bg-gradient-to-br from-background to-secondary/30">
                 <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground font-medium">
