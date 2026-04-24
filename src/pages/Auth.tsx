@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo.png";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { avatarUrl } from "@/lib/user-avatar";
+import { cn } from "@/lib/utils";
+
+type Team = { id: string; name: string };
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -18,11 +23,24 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  // Signup-only state
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [teamId, setTeamId] = useState<string>("");
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [avatarBase] = useState(() =>
+    typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
+  );
+  const avatarSeeds = useMemo(
+    () => Array.from({ length: 8 }, (_, i) => `${avatarBase}-${i + 1}`),
+    [avatarBase],
+  );
+  const [selectedSeed, setSelectedSeed] = useState<string>(avatarSeeds[0]);
+
   useEffect(() => {
     if (!loading && user) navigate("/", { replace: true });
   }, [user, loading, navigate]);
 
-  // SEO básico
   useEffect(() => {
     document.title = "Iniciar sesión | Prode Mundial 2026";
     const desc = document.querySelector('meta[name="description"]');
@@ -34,6 +52,14 @@ const Auth = () => {
       m.content = content;
       document.head.appendChild(m);
     }
+  }, []);
+
+  useEffect(() => {
+    supabase
+      .from("teams")
+      .select("id, name")
+      .order("name", { ascending: true })
+      .then(({ data }) => setTeams((data ?? []) as Team[]));
   }, []);
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -54,12 +80,28 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!firstName.trim() || !lastName.trim() || !teamId || !selectedSeed) {
+      toast({
+        title: "Faltan datos",
+        description: "Completá nombre, apellido, equipo y elegí un avatar.",
+        variant: "destructive",
+      });
+      return;
+    }
     setSubmitting(true);
     const redirectUrl = `${window.location.origin}/`;
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: redirectUrl },
+      options: {
+        emailRedirectTo: redirectUrl,
+        data: {
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+          team_id: teamId,
+          avatar_seed: selectedSeed,
+        },
+      },
     });
     setSubmitting(false);
     if (error) {
@@ -122,6 +164,64 @@ const Auth = () => {
 
               <TabsContent value="signup">
                 <form onSubmit={handleSignUp} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-first">Nombre</Label>
+                      <Input id="signup-first" type="text" required autoComplete="given-name"
+                        value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Juan" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-last">Apellido</Label>
+                      <Input id="signup-last" type="text" required autoComplete="family-name"
+                        value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Pérez" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-team">Equipo</Label>
+                    <Select value={teamId} onValueChange={setTeamId}>
+                      <SelectTrigger id="signup-team">
+                        <SelectValue placeholder="Elegí tu equipo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {teams.map((t) => (
+                          <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Elegí tu avatar</Label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {avatarSeeds.map((seed) => {
+                        const isSel = seed === selectedSeed;
+                        return (
+                          <button
+                            key={seed}
+                            type="button"
+                            onClick={() => setSelectedSeed(seed)}
+                            aria-label="Elegir avatar"
+                            aria-pressed={isSel}
+                            className={cn(
+                              "aspect-square rounded-lg border-2 bg-muted overflow-hidden transition-all",
+                              isSel
+                                ? "border-primary ring-2 ring-primary/40 scale-105"
+                                : "border-border hover:border-primary/50",
+                            )}
+                          >
+                            <img
+                              src={avatarUrl(seed)}
+                              alt="avatar"
+                              className="h-full w-full object-cover"
+                              loading="lazy"
+                            />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="signup-email">Email</Label>
                     <Input id="signup-email" type="email" required autoComplete="email"
