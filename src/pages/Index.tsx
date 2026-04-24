@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { MultiplierBadge } from "@/lib/multiplier";
 import { TeamName } from "@/lib/country-flag";
 import { TrendBadge } from "@/lib/trend-badge";
+import { UserAvatar } from "@/lib/user-avatar";
+import { displayName, firstName } from "@/lib/display-name";
 
 const KNOCKOUT_STAGES = ["round_of_32", "round_of_16", "quarterfinal", "semifinal", "final"];
 
