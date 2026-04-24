@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { UserAvatar } from "@/lib/user-avatar";
+import { displayName } from "@/lib/display-name";
 
 const baseItems = [
   { title: "Inicio", url: "/", icon: Trophy },
