@@ -190,10 +190,14 @@ export type Database = {
     Views: {
       user_ranking: {
         Row: {
+          avatar_seed: string | null
           current_rank: number | null
           email: string | null
+          first_name: string | null
+          last_name: string | null
           predictions_count: number | null
           previous_rank: number | null
+          team_name: string | null
           total_points: number | null
           user_id: string | null
         }
