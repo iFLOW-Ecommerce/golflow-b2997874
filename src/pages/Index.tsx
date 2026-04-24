@@ -51,6 +51,15 @@ const Index = () => {
   const [myPosition, setMyPosition] = useState<number | null>(null);
   const [myPoints, setMyPoints] = useState<number>(0);
   const [myProfile, setMyProfile] = useState<{ first_name: string | null; last_name: string | null; email: string | null } | null>(null);
+  const [globalTotal, setGlobalTotal] = useState<number>(0);
+  const [myCurrentRank, setMyCurrentRank] = useState<number | null>(null);
+  const [myPreviousRank, setMyPreviousRank] = useState<number | null>(null);
+  const [myTeamName, setMyTeamName] = useState<string | null>(null);
+  const [myTeamId, setMyTeamId] = useState<string | null>(null);
+  const [myTeamPosition, setMyTeamPosition] = useState<number | null>(null);
+  const [myTeamTotal, setMyTeamTotal] = useState<number>(0);
+  const [myTeamCurrentRank, setMyTeamCurrentRank] = useState<number | null>(null);
+  const [myTeamPreviousRank, setMyTeamPreviousRank] = useState<number | null>(null);
   const [rankingWindow, setRankingWindow] = useState<Array<{ position: number; user_id: string; email: string | null; first_name: string | null; last_name: string | null; avatar_seed: string | null; total_points: number; current_rank: number | null; previous_rank: number | null }>>([]);
   const [upcoming, setUpcoming] = useState<MatchRow[]>([]);
   const [recent, setRecent] = useState<MatchRow[]>([]);
