@@ -98,6 +98,27 @@ const Ranking = () => {
   const me = myIndex >= 0 ? filtered[myIndex] : null;
   const myPosition = myIndex >= 0 ? myIndex + 1 : null;
 
+  // Compute global and team positions independently of selected scope
+  const globalSorted = useMemo(() => rows, [rows]);
+  const myGlobalPosition = useMemo(() => {
+    const i = globalSorted.findIndex((r) => r.user_id === user?.id);
+    return i >= 0 ? i + 1 : null;
+  }, [globalSorted, user?.id]);
+
+  const teamSorted = useMemo(() => {
+    if (!myRow?.team_id) return [];
+    return rows
+      .filter((r) => r.team_id === myRow.team_id)
+      .sort((a, b) => {
+        if (b.total_points !== a.total_points) return b.total_points - a.total_points;
+        return (a.email ?? "").localeCompare(b.email ?? "");
+      });
+  }, [rows, myRow?.team_id]);
+  const myTeamPosition = useMemo(() => {
+    const i = teamSorted.findIndex((r) => r.user_id === user?.id);
+    return i >= 0 ? i + 1 : null;
+  }, [teamSorted, user?.id]);
+
   const scopeLabel = isGlobal
     ? "Ranking global"
     : `Equipo: ${teams.find((t) => t.id === scope)?.name ?? "—"}`;
