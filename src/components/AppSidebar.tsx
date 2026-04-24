@@ -95,8 +95,19 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-2">
-        {!collapsed && user?.email && (
-          <p className="px-2 pb-1 text-xs text-sidebar-foreground/70 truncate">{user.email}</p>
+        {user && (
+          <div className="flex items-center gap-2 px-2 pb-2">
+            <UserAvatar
+              seed={profile?.avatar_seed ?? null}
+              name={displayName(profile ?? { email: user.email ?? null })}
+              className="h-7 w-7 shrink-0"
+            />
+            {!collapsed && (
+              <p className="text-xs font-medium text-sidebar-foreground truncate">
+                {displayName(profile ?? { email: user.email ?? null })}
+              </p>
+            )}
+          </div>
         )}
         <SidebarMenu>
           <SidebarMenuItem>
