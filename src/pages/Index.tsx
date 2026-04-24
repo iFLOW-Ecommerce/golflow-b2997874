@@ -75,7 +75,7 @@ const Index = () => {
     if (!user) return;
     const load = async () => {
       const nowIso = new Date().toISOString();
-      const [ranking, upcomingRes, recentRes, predsRes, profileRes] = await Promise.all([
+      const [ranking, upcomingRes, recentRes, predsRes, profileRes, finishedRes] = await Promise.all([
         supabase
           .from("user_ranking" as any)
           .select("user_id, email, first_name, last_name, avatar_seed, team_id, team_name, total_points, current_rank, previous_rank, team_current_rank, team_previous_rank")
@@ -103,6 +103,11 @@ const Index = () => {
           .select("first_name, last_name, email")
           .eq("user_id", user.id)
           .maybeSingle(),
+        supabase
+          .from("matches")
+          .select("id, match_date")
+          .eq("is_finished", true)
+          .order("match_date", { ascending: true }),
       ]);
 
       setMyProfile((profileRes.data as any) ?? null);
