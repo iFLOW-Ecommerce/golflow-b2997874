@@ -52,8 +52,7 @@ const Ranking = () => {
   const me = myIndex >= 0 ? rows[myIndex] : null;
   const myPosition = myIndex >= 0 ? myIndex + 1 : null;
 
-  const displayName = (email: string | null) =>
-    email ? email.split("@")[0] : "Usuario";
+  const displayName = (row: RankingRow) => fmtName(row);
 
   const positionCell = (pos: number) => {
     if (pos === 1) return <span className="text-xl" aria-label="Primero">🥇</span>;
