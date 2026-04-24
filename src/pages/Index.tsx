@@ -208,7 +208,7 @@ const Index = () => {
             </div>
 
             {user && myPosition && (
-              <div className="grid grid-cols-2 gap-3 md:w-[320px]">
+              <div className="grid grid-cols-2 md:grid-cols-1 gap-3 md:w-[200px]">
                 {/* Global */}
                 <div className="rounded-xl bg-white/10 backdrop-blur p-3 border border-white/15">
                   <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide opacity-90 font-medium">
