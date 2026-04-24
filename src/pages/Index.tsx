@@ -60,6 +60,8 @@ const streakEmoji = (n: number) => {
   if (n === 10) return "👑👑";
   return "👑👑👑";
 };
+
+const Index = () => {
   const { user } = useAuth();
   const [myPosition, setMyPosition] = useState<number | null>(null);
   const [myPoints, setMyPoints] = useState<number>(0);
