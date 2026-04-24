@@ -163,22 +163,47 @@ const Ranking = () => {
           </div>
         </div>
 
-        {me && (
-          <Card className="shadow-card border-primary/30">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Tu posición</CardTitle>
-              <CardDescription>
-                {myPosition ? (
-                  <>
-                    Estás en el puesto <span className="font-semibold text-foreground">#{myPosition}</span>{" "}
-                    con <span className="font-semibold text-foreground">{me.total_points}</span> puntos
-                    {" "}en {isGlobal ? "el ranking global" : `tu equipo (${myTeam?.name ?? "—"})`}.
-                  </>
+        {myRow && (
+          <Card className="shadow-card border-primary/30 overflow-hidden">
+            <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-border">
+              {/* Global */}
+              <div className="p-5 bg-gradient-to-br from-background to-secondary/30">
+                <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground font-medium">
+                  <span>🌐</span>
+                  <span>Global</span>
+                </div>
+                {myGlobalPosition ? (
+                  <div className="mt-2 flex items-baseline gap-2">
+                    <span className="text-3xl font-bold text-foreground">#{myGlobalPosition}</span>
+                    <span className="text-sm text-muted-foreground">
+                      · <span className="font-semibold text-foreground">{myRow.total_points}</span> pts
+                    </span>
+                  </div>
                 ) : (
-                  "Aún no apareces en este ranking."
+                  <p className="mt-2 text-sm text-muted-foreground">Sin posición aún.</p>
                 )}
-              </CardDescription>
-            </CardHeader>
+              </div>
+
+              {/* Team */}
+              <div className="p-5 bg-gradient-to-br from-primary/5 to-primary/10">
+                <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-primary font-medium">
+                  <span>⭐</span>
+                  <span className="truncate">Equipo · {myRow.team_name ?? "Sin equipo"}</span>
+                </div>
+                {myRow.team_id && myTeamPosition ? (
+                  <div className="mt-2 flex items-baseline gap-2">
+                    <span className="text-3xl font-bold text-primary">#{myTeamPosition}</span>
+                    <span className="text-sm text-muted-foreground">
+                      de <span className="font-semibold text-foreground">{teamSorted.length}</span>
+                    </span>
+                  </div>
+                ) : (
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {myRow.team_id ? "Sin posición aún." : "Aún no perteneces a un equipo."}
+                  </p>
+                )}
+              </div>
+            </div>
           </Card>
         )}
 
