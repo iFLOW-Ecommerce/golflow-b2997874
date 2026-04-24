@@ -39,7 +39,7 @@ const Ranking = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from("user_ranking" as any)
-        .select("user_id, email, total_points, predictions_count, current_rank, previous_rank")
+        .select("user_id, email, first_name, last_name, avatar_seed, team_name, total_points, predictions_count, current_rank, previous_rank")
         .order("total_points", { ascending: false })
         .order("email", { ascending: true });
       if (!error && data) setRows(data as unknown as RankingRow[]);
