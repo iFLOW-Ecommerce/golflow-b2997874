@@ -199,9 +199,17 @@ const Index = () => {
                 const missing = upcoming.filter((m) => !predsByMatch[m.id]).length;
                 return (
                   <p className="text-sm opacity-90 mt-2">
-                    {missing === 0
-                      ? "🏖️ Estás al día con tus predicciones"
-                      : `🎯 Te faltan ${missing} ${missing === 1 ? "predicción" : "predicciones"} para estar al día`}
+                    {missing === 0 ? (
+                      "🏖️ Estás al día con tus predicciones"
+                    ) : (
+                      <>
+                        🎯 Te faltan{" "}
+                        <span className="font-bold bg-white/20 px-1.5 py-0.5 rounded-md text-primary-foreground">
+                          {missing} {missing === 1 ? "predicción" : "predicciones"}
+                        </span>{" "}
+                        para estar al día
+                      </>
+                    )}
                   </p>
                 );
               })()}
