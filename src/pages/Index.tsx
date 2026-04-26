@@ -11,6 +11,17 @@ import { TeamName } from "@/lib/country-flag";
 import { TrendBadge } from "@/lib/trend-badge";
 import { UserAvatar } from "@/lib/user-avatar";
 import { displayName, firstName } from "@/lib/display-name";
+import { AchievementChip } from "@/lib/achievement-chip";
+
+type StageGroup = "group" | "knockout" | "tournament";
+type Achievement = {
+  scope: "global" | "team";
+  team_id: string | null;
+  stage_group: StageGroup;
+  position: number;
+};
+
+const STAGE_ORDER: Record<StageGroup, number> = { tournament: 0, knockout: 1, group: 2 };
 
 const KNOCKOUT_STAGES = ["round_of_32", "round_of_16", "quarterfinal", "semifinal", "final"];
 
