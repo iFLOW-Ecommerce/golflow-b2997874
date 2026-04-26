@@ -603,52 +603,185 @@ const Index = () => {
           </CardContent>
         </Card>
 
-        <Card className="shadow-card">
-          <CardHeader className="pb-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary mb-2">
-              <BarChart3 className="h-5 w-5 text-primary" />
-            </div>
-            <CardTitle className="text-base">Ranking</CardTitle>
-            <CardDescription>
-              {myPosition
-                ? `Tu posición actual: #${myPosition} con ${myPoints} puntos.`
-                : "Aún no tenés posición en el ranking."}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {rankingWindow.length > 0 && (
-              <ul className="divide-y divide-border rounded-lg border bg-card overflow-hidden">
-                {rankingWindow.map((r) => {
-                  const isMe = r.user_id === user?.id;
-                  const name = displayName(r);
-                  return (
-                    <li
-                      key={r.user_id}
-                      className={`flex items-center gap-3 px-3 py-2 text-sm ${
-                        isMe ? "bg-primary/10 border-l-2 border-l-primary font-semibold" : ""
-                      }`}
+        <div className="grid gap-4 md:grid-cols-2">
+          {/* Card A — Ranking individual con switch Global/Equipo */}
+          <Card className="shadow-card">
+            <CardHeader className="pb-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary mb-2">
+                    <BarChart3 className="h-5 w-5 text-primary" />
+                  </div>
+                  <CardTitle className="text-base">Ranking</CardTitle>
+                  <CardDescription>
+                    {rankView === "global"
+                      ? (myPosition ? `Global: #${myPosition} de ${globalTotal} · ${myPoints} pts` : "Aún no tenés posición global.")
+                      : (myTeamPosition ? `Equipo: #${myTeamPosition} de ${myTeamTotal} · ${myPoints} pts` : (myTeamId ? "Sin posición en equipo." : "Sin equipo asignado."))}
+                  </CardDescription>
+                </div>
+                {myTeamId && (
+                  <div className="flex items-center gap-2 shrink-0 mt-1">
+                    <button
+                      type="button"
+                      onClick={() => setRankView("global")}
+                      className={cn(
+                        "text-base transition-opacity",
+                        rankView === "global" ? "opacity-100" : "opacity-40 hover:opacity-70"
+                      )}
+                      title="Ranking global"
+                      aria-label="Ranking global"
                     >
-                      <span className="w-8 shrink-0 text-xs text-muted-foreground tabular-nums">
-                        #{r.position}
-                      </span>
-                      <UserAvatar seed={r.avatar_seed} name={name} className="h-7 w-7" />
-                      <span className="flex-1 min-w-0 truncate">{name}</span>
-                      <span className="shrink-0 text-xs tabular-nums flex items-center gap-2">
-                        <span className={isMe ? "text-primary" : "text-muted-foreground"}>
-                          {r.total_points} pts
+                      🌐
+                    </button>
+                    <Switch
+                      checked={rankView === "team"}
+                      onCheckedChange={(checked) => setRankView(checked ? "team" : "global")}
+                      aria-label="Cambiar entre ranking global y de equipo"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setRankView("team")}
+                      className={cn(
+                        "text-base transition-opacity",
+                        rankView === "team" ? "opacity-100" : "opacity-40 hover:opacity-70"
+                      )}
+                      title={`Ranking de equipo${myTeamName ? `: ${myTeamName}` : ""}`}
+                      aria-label="Ranking de equipo"
+                    >
+                      ⭐
+                    </button>
+                  </div>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {rankView === "global" ? (
+                rankingWindow.length > 0 && (
+                  <ul className="divide-y divide-border rounded-lg border bg-card overflow-hidden">
+                    {rankingWindow.map((r) => {
+                      const isMe = r.user_id === user?.id;
+                      const name = displayName(r);
+                      return (
+                        <li
+                          key={r.user_id}
+                          className={`flex items-center gap-2 px-3 py-2 text-sm ${
+                            isMe ? "bg-primary/10 border-l-2 border-l-primary font-semibold" : ""
+                          }`}
+                        >
+                          <span className="w-7 shrink-0 text-xs text-muted-foreground tabular-nums">
+                            #{r.position}
+                          </span>
+                          <UserAvatar seed={r.avatar_seed} name={name} className="h-7 w-7 shrink-0" />
+                          <span className="flex-1 min-w-0 truncate">
+                            <span className="block truncate">{name}</span>
+                            {r.team_name && (
+                              <span className="block text-[11px] text-muted-foreground truncate font-normal">
+                                {r.team_name}
+                              </span>
+                            )}
+                          </span>
+                          <span className="shrink-0 text-xs tabular-nums flex items-center gap-2">
+                            <span className={isMe ? "text-primary" : "text-muted-foreground"}>
+                              {r.total_points} pts
+                            </span>
+                            <TrendBadge current={r.current_rank} previous={r.previous_rank} />
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )
+              ) : (
+                teamRankingWindow.length > 0 ? (
+                  <ul className="divide-y divide-border rounded-lg border bg-card overflow-hidden">
+                    {teamRankingWindow.map((r) => {
+                      const isMe = r.user_id === user?.id;
+                      const name = displayName(r);
+                      return (
+                        <li
+                          key={r.user_id}
+                          className={`flex items-center gap-2 px-3 py-2 text-sm ${
+                            isMe ? "bg-primary/10 border-l-2 border-l-primary font-semibold" : ""
+                          }`}
+                        >
+                          <span className="w-7 shrink-0 text-xs text-muted-foreground tabular-nums">
+                            #{r.position}
+                          </span>
+                          <UserAvatar seed={r.avatar_seed} name={name} className="h-7 w-7 shrink-0" />
+                          <span className="flex-1 min-w-0 truncate">{name}</span>
+                          <span className="shrink-0 text-xs tabular-nums flex items-center gap-2">
+                            <span className={isMe ? "text-primary" : "text-muted-foreground"}>
+                              {r.total_points} pts
+                            </span>
+                            <TrendBadge current={r.team_current_rank} previous={r.team_previous_rank} />
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground py-2">
+                    {myTeamId ? "Sin posición en equipo." : "Sin equipo asignado."}
+                  </p>
+                )
+              )}
+              <Button asChild size="sm" variant="outline" className="w-full sm:w-auto">
+                <Link to="/ranking">Ver ranking</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Card B — Ranking Inter-Áreas */}
+          <Card className="shadow-card">
+            <CardHeader className="pb-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary mb-2">
+                <Building2 className="h-5 w-5 text-primary" />
+              </div>
+              <CardTitle className="text-base">Inter Áreas</CardTitle>
+              <CardDescription>
+                {myTeamId
+                  ? "Tu área entre las más cercanas."
+                  : "Top de áreas por promedio de puntos."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {interAreasWindow.length > 0 ? (
+                <ul className="divide-y divide-border rounded-lg border bg-card overflow-hidden">
+                  {interAreasWindow.map((r) => {
+                    const isMine = !!myTeamId && r.team_id === myTeamId;
+                    return (
+                      <li
+                        key={r.team_avatar_id}
+                        className={`flex items-center gap-2 px-3 py-2 text-sm ${
+                          isMine ? "bg-primary/10 border-l-2 border-l-primary font-semibold" : ""
+                        }`}
+                      >
+                        <span className="w-7 shrink-0 text-xs text-muted-foreground tabular-nums">
+                          #{r.position}
                         </span>
-                        <TrendBadge current={r.current_rank} previous={r.previous_rank} />
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-            <Button asChild size="sm" variant="outline" className="w-full sm:w-auto">
-              <Link to="/ranking">Ver ranking</Link>
-            </Button>
-          </CardContent>
-        </Card>
+                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/15 text-primary shrink-0">
+                          <Building2 className="h-4 w-4" />
+                        </div>
+                        <span className="flex-1 min-w-0 truncate">{r.name}</span>
+                        <span className="shrink-0 text-xs tabular-nums flex items-center gap-2">
+                          <span className={isMine ? "text-primary" : "text-muted-foreground"}>
+                            {r.total_points} pts
+                          </span>
+                          <TrendBadge current={r.current_rank} previous={r.previous_rank} />
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p className="text-sm text-muted-foreground py-2">Aún no hay datos de áreas.</p>
+              )}
+              <Button asChild size="sm" variant="outline" className="w-full sm:w-auto">
+                <Link to="/ranking">Ver ranking</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
 
         <Card className="shadow-card">
           <CardHeader className="pb-3">
