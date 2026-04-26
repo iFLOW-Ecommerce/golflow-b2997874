@@ -1,114 +1,83 @@
-## Funcionalidad: Logros (Top 3 por etapa, global y por equipo)
+## Objetivo
 
-### 1. Definición de "etapa" para logros
-- **`group`** → Fase de grupos (todos los partidos con `stage='group'`)
-- **`knockout`** → Eliminatorias (stages: `round_of_32`, `round_of_16`, `quarterfinal`, `semifinal`, `third_place`, `final`)
-- **`tournament`** → Torneo Mundial 2026 (todos los partidos)
+Crear una nueva competencia paralela: cada equipo tiene un **jugador ficticio** (ej. "Equipo IT prom.") cuyos puntos son el **promedio entero** de los puntos que sus compañeros reales ganan en cada partido. Estos jugadores se rankean entre sí en una nueva categoría **"Inter Áreas"**, sin mezclarse con el ranking global ni el de equipos, y sin participar de logros.
 
-Una etapa se considera "completada" cuando **todos** los partidos de esa agrupación tienen `is_finished = true` y `home_score`/`away_score` no nulos.
+## Lógica de cálculo
 
-### 2. Backend — nueva tabla `achievements`
+Por cada partido finalizado y por cada equipo:
 
-Migración SQL nueva:
+- Identificar los miembros del equipo que **predijeron ese partido**.
+- Sumar sus `points_awarded` para ese partido.
+- Dividir por la cantidad de predictores → **redondear a entero** (`ROUND`).
+- Ese valor es el aporte del jugador ficticio para ese partido.
 
-```sql
-CREATE TABLE public.achievements (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL,
-  scope text NOT NULL CHECK (scope IN ('global','team')),
-  team_id uuid NULL REFERENCES public.teams(id) ON DELETE CASCADE,
-  stage_group text NOT NULL CHECK (stage_group IN ('group','knockout','tournament')),
-  position smallint NOT NULL CHECK (position BETWEEN 1 AND 3),
-  points integer NOT NULL DEFAULT 0,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (user_id, scope, COALESCE(team_id, '00000000-0000-0000-0000-000000000000'::uuid), stage_group)
-);
+El total del jugador ficticio = suma de los promedios redondeados de todos los partidos donde al menos 1 miembro del equipo predijo. Si nadie del equipo predijo un partido, ese partido aporta 0.
 
-ALTER TABLE public.achievements ENABLE ROW LEVEL SECURITY;
+## Cambios en base de datos (migración)
 
-CREATE POLICY "Achievements viewable by authenticated"
-  ON public.achievements FOR SELECT TO authenticated USING (true);
-```
-(Sólo SELECT pública; los inserts los hace una función `SECURITY DEFINER`.)
+### 1. Nueva tabla `team_avatars`
 
-### 3. Función SQL `recalculate_achievements()`
+Representa al "jugador ficticio" de cada equipo:
 
-`SECURITY DEFINER`. Lógica:
+- `id uuid pk`
+- `team_id uuid unique` (FK a `teams`)
+- `name text` (auto: "Equipo {nombre} prom.")
+- `created_at`
 
-1. Para cada `stage_group` (`group`, `knockout`, `tournament`):
-   - Verificar si **todos** los partidos de ese grupo están `is_finished = true` y con scores. Si no, saltarlo.
-2. Calcular puntos por usuario sumando `points_awarded` sólo de predicciones cuyo `match_id` pertenezca a esa etapa.
-3. **Global top 3**: ordenar usuarios por puntos DESC, `email` ASC; tomar top 3 con `points > 0`.
-4. **Team top 3**: para cada `team_id`, ordenar miembros del equipo por puntos DESC; tomar top 3 con `points > 0`.
-5. `DELETE FROM achievements` para esa etapa y reinsertar (idempotente).
+Trigger: al crear un team, se crea automáticamente su `team_avatar`. Migración inicial: poblar uno por cada team existente.
 
-Se agregarán llamadas a `recalculate_achievements()` desde donde hoy se llama `recalculate_user_ranks()`/`recalculate_team_ranks()` en el flujo del Admin (al guardar resultados). Si no existe ese punto centralizado, se llamará desde `Admin.tsx` luego del update de matches.
+### 2. Nueva tabla `team_avatar_ranks`
 
-### 4. Frontend — Hero en `src/pages/Index.tsx`
+- `team_avatar_id uuid pk`
+- `current_rank int`
+- `previous_rank int`
+- `total_points int default 0`
+- `updated_at`
 
-**Fetch nuevo** dentro del `Promise.all` actual:
-```ts
-supabase.from("achievements")
-  .select("scope, team_id, stage_group, position")
-  .eq("user_id", user.id)
-```
+RLS: SELECT abierto a `authenticated`.
 
-**Estado**: `const [achievements, setAchievements] = useState<Achievement[]>([])`.
+### 3. Nuevas funciones
 
-**Orden de render** (filtrar primero por scope, luego por stage_group):
-1. Globales: `tournament` → `knockout` → `group`
-2. Equipo: `tournament` → `knockout` → `group`
+- `**recalculate_team_avatar_points()**`: recalcula `total_points` para todos los `team_avatars` usando la lógica de promedio redondeado por partido.
+- `**recalculate_team_avatar_ranks()**`: ordena por `total_points DESC` y asigna `current_rank` (rompe empates por nombre).
+- `**snapshot_team_avatar_ranks()**`: copia `current_rank → previous_rank` (para tendencia).
 
-**Etiquetas**:
-- Global: `#{position} Ranking Global` con prefijo según etapa: `Torneo:`, `Eliminatorias:`, `Fase de grupos:`
-- Equipo: `#{position} Ranking Equipo {teamName}` con mismos prefijos
+### 4. Integración
 
-Ejemplos visibles:
-- 🏆 Fase de grupos: #1 Ranking Global
-- ⭐ Eliminatorias: #2 Ranking Equipo IT
+- Llamar a `recalculate_team_avatar_points()` y `recalculate_team_avatar_ranks()` desde `Admin.tsx` después de cada actualización de resultados (junto a las otras `recalculate_*`).
+- Llamar a `snapshot_team_avatar_ranks()` antes del recálculo (mismo patrón que ya existe).
 
-**Sección oculta si `achievements.length === 0`**.
+## Cambios en frontend
 
-### 5. Componente `AchievementChip` (inline en Index o nuevo `src/lib/achievement-chip.tsx`)
+### `src/pages/Ranking.tsx`
 
-Mismo estilo visual que `MultiplierBadge` (rounded-full, fuente bold, padding compacto):
+Agregar nueva opción al `Select` de scope: **"🏢 Inter Áreas"** (separada de Global/Equipos).
 
-```tsx
-// Global (verde neón)
-<span className="inline-flex items-center gap-1 rounded-full bg-emerald-400/15 text-emerald-300 border border-emerald-400/30 px-2.5 py-1 text-xs font-semibold">
-  🏆 {label}
-</span>
+Cuando el usuario elige "Inter Áreas":
 
-// Equipo (amarillo neón)
-<span className="inline-flex items-center gap-1 rounded-full bg-yellow-300/15 text-yellow-200 border border-yellow-300/30 px-2.5 py-1 text-xs font-semibold">
-  ⭐ {label}
-</span>
-```
+- Cargar desde una nueva fuente (join `team_avatars + teams + team_avatar_ranks`).
+- Mostrar tabla con columnas: **Posición · Usuario (nombre del jugador ficticio + ícono 🏢) · Puntos · Tendencia**.
+- Reutilizar `positionCell`, `TrendBadge` y los estilos de medallas (oro/plata/bronce).
+- No mostrar columna "Equipo" (es implícito).
+- Resaltar el equipo asociado al usuario (es decir si el usuario logueado es del Equipo IT, resaltar al team_avatar asociado (en este ejemplo "Equipo IT prom.").
+- Tarjeta "Tu posición" se oculta en este scope (no aplica).
 
-### 6. Ubicación en el Hero
+### Exclusión del resto del sistema
 
-Debajo del bloque de chips de Precisión/Racha (después de la línea ~272 en `Index.tsx`), dentro del mismo `<div className="min-w-0">`:
+- Los `team_avatars` **no** son `profiles`, no tienen `user_id` en `auth.users`, por lo tanto:
+  - No aparecen en ranking global ni de equipo (que se basan en `profiles`).
+  - No reciben logros (la función `recalculate_achievements` opera sobre `profiles`).
+  - No hacen predicciones.
 
-```tsx
-{achievements.length > 0 && (
-  <div className="mt-3">
-    <div className="text-[11px] uppercase tracking-wide opacity-80 font-medium mb-1.5">
-      🎖️ Logros
-    </div>
-    <div className="flex flex-wrap gap-1.5">
-      {sortedAchievements.map(a => <AchievementChip key={...} {...} />)}
-    </div>
-  </div>
-)}
-```
+## Archivos a modificar/crear
 
-### 7. Archivos afectados
-- **Nueva migración**: tabla `achievements` + función `recalculate_achievements`
-- **`src/pages/Admin.tsx`**: invocar `supabase.rpc('recalculate_achievements')` después de guardar resultados (junto a las llamadas existentes de recálculo de ranks)
-- **`src/pages/Index.tsx`**: fetch + render de la sección Logros
-- **`src/lib/achievement-chip.tsx`** (nuevo): componente reutilizable
+- **Nueva migración SQL**: tablas `team_avatars`, `team_avatar_ranks`, funciones de recálculo/snapshot, trigger de auto-creación, RLS, y backfill inicial.
+- `**src/pages/Admin.tsx**`: agregar llamadas a las nuevas funciones tras actualizar resultados.
+- `**src/pages/Ranking.tsx**`: agregar opción "Inter Áreas" en el Select y branch de render para esta categoría.
+- `**src/integrations/supabase/types.ts**`: se regenera automáticamente.
 
-### 8. Consideraciones
-- Los logros se asignan sólo si el usuario tiene `points > 0` en esa etapa (evita "campeones" con 0 puntos cuando hay menos de 3 jugadores activos).
-- Si un equipo tiene menos de 3 miembros, sólo se otorgarán los logros que correspondan (1° y 2° si hay 2, etc.).
-- La función es idempotente: se puede correr múltiples veces sin duplicar.
+## Notas
+
+- El nombre del jugador ficticio sigue el formato **"Equipo {nombre} prom."** (ej. "Equipo IT prom.").
+- Se renderiza con un avatar/ícono distintivo (🏢) en lugar de `UserAvatar` para diferenciarlo visualmente de jugadores reales.
+- Tendencia funciona igual que en los otros rankings (snapshot previo vs actual).
