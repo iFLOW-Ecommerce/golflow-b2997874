@@ -616,7 +616,7 @@ const Index = () => {
                   <CardDescription>
                     {rankView === "global"
                       ? (myPosition ? `Global: #${myPosition} de ${globalTotal} · ${myPoints} pts` : "Aún no tenés posición global.")
-                      : (myTeamPosition ? `Equipo: #${myTeamPosition} de ${myTeamTotal} · ${myPoints} pts` : (myTeamId ? "Sin posición en equipo." : "Sin equipo asignado."))}
+                      : (myTeamPosition ? `Equipo ${myTeamName ?? ""}: #${myTeamPosition} de ${myTeamTotal} · ${myPoints} pts` : (myTeamId ? "Sin posición en equipo." : "Sin equipo asignado."))}
                   </CardDescription>
                 </div>
                 {myTeamId && (
