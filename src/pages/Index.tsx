@@ -184,7 +184,7 @@ const Index = () => {
     if (!user) return;
     const load = async () => {
       const nowIso = new Date().toISOString();
-      const [ranking, upcomingRes, recentRes, predsRes, profileRes, finishedRes, achievementsRes] = await Promise.all([
+      const [ranking, upcomingRes, recentRes, predsRes, profileRes, finishedRes, achievementsRes, teamAvatarsRes] = await Promise.all([
         supabase
           .from("user_ranking" as any)
           .select("user_id, email, first_name, last_name, avatar_seed, team_id, team_name, total_points, current_rank, previous_rank, team_current_rank, team_previous_rank")
@@ -221,6 +221,9 @@ const Index = () => {
           .from("achievements" as any)
           .select("scope, team_id, stage_group, position")
           .eq("user_id", user.id),
+        supabase
+          .from("team_avatars" as any)
+          .select("id, team_id, name, team_avatar_ranks(total_points, current_rank, previous_rank)"),
       ]);
 
       setAchievements(((achievementsRes.data ?? []) as unknown) as Achievement[]);
@@ -240,28 +243,13 @@ const Index = () => {
         setMyTeamName(me.team_name);
         setMyTeamCurrentRank(me.team_current_rank);
         setMyTeamPreviousRank(me.team_previous_rank);
+        // Default switch a "team" si tiene equipo
+        setRankView(me.team_id ? "team" : "global");
 
-        if (me.team_id) {
-          const teamRows = rows
-            .filter((r) => r.team_id === me.team_id)
-            .sort((a, b) => {
-              if ((b.total_points ?? 0) !== (a.total_points ?? 0)) return (b.total_points ?? 0) - (a.total_points ?? 0);
-              return (a.email ?? "").localeCompare(b.email ?? "");
-            });
-          setMyTeamTotal(teamRows.length);
-          const tIdx = teamRows.findIndex((r) => r.user_id === user.id);
-          setMyTeamPosition(tIdx >= 0 ? tIdx + 1 : null);
-        } else {
-          setMyTeamTotal(0);
-          setMyTeamPosition(null);
-        }
-
+        // Ventana global (5 alrededor del usuario)
         let start = idx - 2;
         let end = idx + 2;
-        if (start < 0) {
-          end += -start;
-          start = 0;
-        }
+        if (start < 0) { end += -start; start = 0; }
         if (end > rows.length - 1) {
           start = Math.max(0, start - (end - (rows.length - 1)));
           end = rows.length - 1;
@@ -273,16 +261,92 @@ const Index = () => {
           first_name: r.first_name,
           last_name: r.last_name,
           avatar_seed: r.avatar_seed,
+          team_name: r.team_name,
           total_points: r.total_points ?? 0,
           current_rank: r.current_rank,
           previous_rank: r.previous_rank,
         }));
         setRankingWindow(windowRows);
+
+        // Ventana de equipo
+        if (me.team_id) {
+          const teamRows = rows
+            .filter((r) => r.team_id === me.team_id)
+            .sort((a, b) => {
+              if ((b.total_points ?? 0) !== (a.total_points ?? 0)) return (b.total_points ?? 0) - (a.total_points ?? 0);
+              return (a.email ?? "").localeCompare(b.email ?? "");
+            });
+          setMyTeamTotal(teamRows.length);
+          const tIdx = teamRows.findIndex((r) => r.user_id === user.id);
+          setMyTeamPosition(tIdx >= 0 ? tIdx + 1 : null);
+
+          let tStart = tIdx - 2;
+          let tEnd = tIdx + 2;
+          if (tStart < 0) { tEnd += -tStart; tStart = 0; }
+          if (tEnd > teamRows.length - 1) {
+            tStart = Math.max(0, tStart - (tEnd - (teamRows.length - 1)));
+            tEnd = teamRows.length - 1;
+          }
+          const teamWindow = teamRows.slice(tStart, tEnd + 1).map((r, i) => ({
+            position: tStart + i + 1,
+            user_id: r.user_id,
+            email: r.email,
+            first_name: r.first_name,
+            last_name: r.last_name,
+            avatar_seed: r.avatar_seed,
+            total_points: r.total_points ?? 0,
+            team_current_rank: r.team_current_rank,
+            team_previous_rank: r.team_previous_rank,
+          }));
+          setTeamRankingWindow(teamWindow);
+        } else {
+          setMyTeamTotal(0);
+          setMyTeamPosition(null);
+          setTeamRankingWindow([]);
+        }
       } else {
         setMyPosition(null);
         setMyPoints(0);
         setRankingWindow([]);
+        setTeamRankingWindow([]);
       }
+
+      // Inter-Áreas: ventana alrededor del área del usuario (o top 5 si no tiene)
+      const avatarsRaw = (teamAvatarsRes.data ?? []) as any[];
+      const avatars = avatarsRaw.map((r) => {
+        const rank = Array.isArray(r.team_avatar_ranks) ? r.team_avatar_ranks[0] : r.team_avatar_ranks;
+        return {
+          team_avatar_id: r.id as string,
+          team_id: r.team_id as string,
+          name: r.name as string,
+          total_points: (rank?.total_points as number) ?? 0,
+          current_rank: (rank?.current_rank as number | null) ?? null,
+          previous_rank: (rank?.previous_rank as number | null) ?? null,
+        };
+      }).sort((a, b) => {
+        if (b.total_points !== a.total_points) return b.total_points - a.total_points;
+        return a.name.localeCompare(b.name);
+      });
+      const myTeamIdLocal = idx >= 0 ? rows[idx].team_id : null;
+      const myAvatarIdx = myTeamIdLocal
+        ? avatars.findIndex((a) => a.team_id === myTeamIdLocal)
+        : -1;
+      let aStart = 0;
+      let aEnd = Math.min(4, avatars.length - 1);
+      if (myAvatarIdx >= 0) {
+        aStart = myAvatarIdx - 2;
+        aEnd = myAvatarIdx + 2;
+        if (aStart < 0) { aEnd += -aStart; aStart = 0; }
+        if (aEnd > avatars.length - 1) {
+          aStart = Math.max(0, aStart - (aEnd - (avatars.length - 1)));
+          aEnd = avatars.length - 1;
+        }
+      }
+      const interWindow = avatars.slice(aStart, aEnd + 1).map((a, i) => ({
+        position: aStart + i + 1,
+        ...a,
+      }));
+      setInterAreasWindow(interWindow);
 
       setUpcoming((upcomingRes.data ?? []) as MatchRow[]);
       setRecent(((recentRes.data ?? []) as MatchRow[]).slice().reverse());
