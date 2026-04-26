@@ -183,6 +183,7 @@ const Admin = () => {
       // Recompute current_rank with the new points
       await supabase.rpc("recalculate_user_ranks" as any);
       await supabase.rpc("recalculate_team_ranks" as any);
+      await supabase.rpc("recalculate_achievements" as any);
     }
     setSaving(false);
     if (okCount > 0) {
