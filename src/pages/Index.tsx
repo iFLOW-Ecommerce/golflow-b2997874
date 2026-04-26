@@ -465,7 +465,7 @@ const Index = () => {
                     className="shrink-0 mt-1"
                   >
                     <Sparkles className="h-4 w-4" />
-                    <span className="hidden sm:inline">🪔 Predecir Automáticamente</span>
+                    <span className="hidden sm:inline">Predecir Automáticamente</span>
                     <span className="sm:hidden">🪔 Auto</span>
                   </Button>
                 );
