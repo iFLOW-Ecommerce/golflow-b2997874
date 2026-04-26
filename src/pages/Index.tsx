@@ -288,6 +288,34 @@ const Index = () => {
                   )}
                 </div>
               )}
+
+              {user && achievements.length > 0 && (() => {
+                const sorted = [...achievements].sort((a, b) => {
+                  // globales primero, luego equipo
+                  if (a.scope !== b.scope) return a.scope === "global" ? -1 : 1;
+                  // dentro de cada scope: tournament -> knockout -> group
+                  return STAGE_ORDER[a.stage_group] - STAGE_ORDER[b.stage_group];
+                });
+                return (
+                  <div className="mt-4">
+                    <div className="text-[11px] uppercase tracking-wide opacity-90 font-semibold mb-2 flex items-center gap-1.5">
+                      <span>🎖️</span>
+                      <span>Logros</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {sorted.map((a, i) => (
+                        <AchievementChip
+                          key={`${a.scope}-${a.stage_group}-${a.team_id ?? "g"}-${i}`}
+                          scope={a.scope}
+                          stageGroup={a.stage_group}
+                          position={a.position}
+                          teamName={a.scope === "team" ? myTeamName : null}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             {user && myPosition && (
