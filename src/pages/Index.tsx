@@ -107,6 +107,9 @@ const streakEmoji = (n: number) => {
 
 const Index = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const [now, setNow] = useState<number>(Date.now());
+  const [autoPredicting, setAutoPredicting] = useState(false);
   const [myPosition, setMyPosition] = useState<number | null>(null);
   const [myPoints, setMyPoints] = useState<number>(0);
   const [myProfile, setMyProfile] = useState<{ first_name: string | null; last_name: string | null; email: string | null } | null>(null);
