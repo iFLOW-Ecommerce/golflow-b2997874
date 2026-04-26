@@ -1,50 +1,112 @@
-## Cambios en `src/pages/Index.tsx` — Card "Próximos partidos"
+## Cambios en `/Inicio` — sección Ranking
 
-Tres mejoras en la lista de próximos partidos del Inicio. **Sin cambios de DB.**
+### 1. Layout: dividir la card actual en dos, lado a lado
 
----
+Reemplazar la única `<Card>` "Ranking" (líneas 538–583) por un contenedor `grid md:grid-cols-2 gap-4` con **dos cards horizontales**:
+- **Card A** — Ranking individual con switch Global/Equipo
+- **Card B** — Ranking Inter-Áreas (ventana del área del usuario)
 
-### 1) Botón "🪔 Predecir Automáticamente" (arriba a la derecha de la card)
-
-- Ubicación: en el `CardHeader`, alineado a la derecha del título.
-- Visible solo si hay al menos 1 partido pendiente de predecir entre los próximos mostrados (y dentro de fecha límite).
-- Al hacer click:
-  - Detecta los partidos de `upcoming` que **no tienen predicción** y **no están bloqueados** (misma regla que `Prediccion.tsx`: `Date.now() < match_date - 1h`).
-  - Genera un marcador aleatorio realista por partido con la siguiente distribución de goles por equipo (ponderada hacia menos goles, máximo 3):
-    - 0 → 35%, 1 → 35%, 2 → 20%, 3 → 10%
-  - Hace un `supabase.from("predictions").insert([...])` en bloque con `user_id` del usuario.
-  - Actualiza el state local `predsByMatch` con las nuevas predicciones para refrescar la UI sin recargar.
-  - Muestra `toast` de éxito ("Se completaron N predicciones") o de error.
-- Estilo: `Button` `size="sm"` `variant="outline"` con el ícono 🪔. Se deshabilita mientras se está guardando (`isAutoPredicting`).
-- Si no hay partidos pendientes (todos predichos o todos bloqueados), el botón no se renderiza.
-
-### 2) Temporizador en lugar de "– –" + reloj
-
-- Reemplaza el texto "– –" actual cuando no hay predicción por un **countdown en vivo** al `match_date - 1h` (deadline real).
-- Formato:
-  - `> 1 día`: muestra `Nd Nh` (ej. "3d 5h") en color `text-muted-foreground` (gris).
-  - `≤ 1 día y > 4h`: muestra `Nh Nm` en color naranja (`text-orange-500`).
-  - `≤ 4h`: muestra `Nh Nm Ns` en color rojo (`text-destructive`), con segundos en vivo.
-  - `≤ 0`: muestra "Cerrado" en gris.
-- Implementación: un `useState` `now` actualizado por `setInterval(() => setNow(Date.now()), 1000)` montado en el componente; los partidos derivan su display de `now`. Para no actualizar cada segundo cuando faltan días, el intervalo siempre corre 1s pero solo recalcula strings (es barato para 5 filas).
-
-### 3) Botón a la derecha de cada fila
-
-Reemplaza la columna actual de "Tu predicción: X-Y" / link "– –" por un patrón fila + botón:
-- **Sin predicción:** `Button size="sm"` con clase verde tema (`bg-primary text-primary-foreground hover:bg-primary/90`) con texto "Cargar resultados", `asChild` envolviendo `<Link to={\`/prediccion?match=${m.id}\`}>`.
-- **Con predicción:** se sigue mostrando el marcador "Tu predicción: H-A" a la izquierda del botón, y el botón pasa a `Button size="sm" variant="ghost"` (menos destacado) con texto "Modificar" → mismo `Link` a `/prediccion?match=${m.id}`.
-- **Si está cerrado** (`now >= match_date - 1h`) y no hay predicción: el botón se deshabilita ("Cerrado") sin link.
+En mobile se apilan; en desktop quedan en dos columnas.
 
 ---
 
-### Detalles de implementación
+### 2. Card A: Ranking individual con switch Global ↔ Equipo
 
-- Import adicional: `useToast` desde `@/hooks/use-toast`.
-- Constante local `LOCK_MS = 60*60*1000` (replicada de `Prediccion.tsx`).
-- Helper `randomScore()` con la distribución ponderada arriba.
-- Helper `formatCountdown(msRemaining)` que devuelve `{ text, tone: 'gray' | 'orange' | 'red' | 'closed' }`.
-- El temporizador se monta solo si `upcoming.length > 0` para evitar el interval innecesario.
-- No se modifica la card "Últimos partidos" ni la card de Ranking.
+- Estado local nuevo: `const [rankView, setRankView] = useState<"global" | "team">("team")` (default a equipo si el usuario tiene equipo, sino "global").
+- En el `CardHeader`, junto al título, agregar un toggle estilo on-off usando el componente `Switch` de `@/components/ui/switch`, flanqueado por:
+  - Izquierda: `🌐 Global` (o ícono `Globe`)
+  - Derecha: `⭐ {nombre del equipo}` (mismos íconos que ya usamos: 🌐 trofeo/global y ⭐ estrella, manteniendo la convención del hero y de `Ranking.tsx`).
+  - El estado `checked` representa "equipo".
+- `CardDescription` dinámico: muestra la posición/puntos según el view actual (reusa `myPosition`/`myPoints` para global, `myTeamPosition`/`myTeamTotal` para equipo).
 
-### Archivos a editar
-- `src/pages/Index.tsx` (único archivo).
+**Datos a cargar (extender el `select` del query `user_ranking`)**:
+- Ya trae `team_id`, `team_name`, `team_current_rank`, `team_previous_rank`. Suficiente.
+- Construir un nuevo estado `teamRankingWindow` análogo a `rankingWindow` pero filtrando `rows.filter(r => r.team_id === myTeamId)` y reordenando por puntos+email, luego calculando ventana de 5 alrededor del usuario (misma lógica que la existente para global). Esto se hace en el mismo `useEffect` ya presente.
+
+**Render de la lista (dentro de la card)**:
+- Si `rankView === "global"`: lista actual `rankingWindow` + agregar columna **equipo** (texto `text-xs text-muted-foreground truncate` con `r.team_name`, oculto en pantallas muy chicas con `hidden sm:inline`).
+- Si `rankView === "team"`: lista `teamRankingWindow` **sin** la columna equipo (es redundante).
+- En ambos: posición (#), avatar, nombre, puntos, `TrendBadge` (usando `current_rank`/`previous_rank` global o `team_current_rank`/`team_previous_rank` según el view).
+- Mantener resaltado del usuario actual (`isMe`).
+
+Footer: botón "Ver ranking" que linkea a `/ranking` (ya existe).
+
+---
+
+### 3. Card B: Ranking Inter-Áreas (ventana del área del usuario)
+
+Estructura idéntica a Card A pero con datos de `team_avatars` + `team_avatar_ranks`.
+
+**Carga de datos** (agregar al `Promise.all` del `useEffect` existente):
+```ts
+supabase
+  .from("team_avatars" as any)
+  .select("id, team_id, name, team_avatar_ranks(total_points, current_rank, previous_rank)")
+```
+Mapear igual que en `Ranking.tsx` (líneas 70–82) a un array `TeamAvatarRow[]` y guardarlo en estado.
+
+**Procesamiento**:
+- Ordenar por `total_points DESC`, `name ASC`.
+- Encontrar el índice del avatar cuyo `team_id === myTeamId`.
+- Calcular ventana de 5 (mismo algoritmo que `rankingWindow`: 2 antes / 2 después, ajustando bordes).
+
+**Render**:
+- Header: ícono `Building2` + título "Inter Áreas" + descripción tipo "Tu área entre las más cercanas".
+- Lista con: posición (#), ícono 🏢/`Building2` en círculo `bg-primary/15`, nombre del avatar (ej. "Equipo IT prom."), puntos, `TrendBadge`.
+- Resaltar la fila del área del usuario (`row.team_id === myTeamId`) con la misma clase que usa la fila "isMe" de Card A (`bg-primary/10 border-l-2 border-l-primary font-semibold`).
+- Si el usuario no tiene equipo: mostrar mensaje "No perteneces a un área" y listar el top 5 global de Inter-Áreas como fallback.
+
+Footer: botón "Ver ranking" → `/ranking` (mismo destino; el usuario puede cambiar a Inter Áreas con el selector existente).
+
+---
+
+### 4. Detalles de implementación
+
+**Archivo a editar**: `src/pages/Index.tsx` únicamente.
+
+**Imports nuevos**:
+- `Switch` desde `@/components/ui/switch`
+- `Building2` desde `lucide-react`
+
+**Nuevos estados**:
+```ts
+const [rankView, setRankView] = useState<"global" | "team">("global");
+const [teamRankingWindow, setTeamRankingWindow] = useState<typeof rankingWindow>([]);
+const [interAreasWindow, setInterAreasWindow] = useState<Array<{
+  position: number; team_avatar_id: string; team_id: string; name: string;
+  total_points: number; current_rank: number | null; previous_rank: number | null;
+}>>([]);
+```
+
+**Default del switch**: cuando se carga el perfil, si `myTeamId` existe → `setRankView("team")`, sino dejar "global". Hacerlo dentro del `useEffect` de carga, después de setear `myTeamId`.
+
+**Sin cambios en**:
+- Base de datos (todo ya existe: `team_avatars`, `team_avatar_ranks`, vista `user_ranking`).
+- Otros archivos (`Ranking.tsx`, etc.).
+- Lógica de cálculo de puntos.
+
+---
+
+### Resumen visual final
+
+```
+┌──────────────────────────────────────────────────────────┐
+│ [📊 Ranking]   🌐 Global  [●━━○]  ⭐ Mi Equipo          │
+│ Tu posición: #X de Y · Z pts                             │
+│ ─────────────────────────────────────────────────        │
+│ #3  👤 Juan      IT       120 pts  ▲                    │
+│ #4  👤 Vos       IT       110 pts  ─    ← resaltado    │
+│ #5  👤 Ana       IT       100 pts  ▼                    │
+│ [Ver ranking]                                            │
+└──────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│ [🏢 Inter Áreas]                                         │
+│ Tu área entre las más cercanas                           │
+│ ─────────────────────────────────────────────────        │
+│ #2  🏢 Equipo Marketing prom.   85 pts  ▲               │
+│ #3  🏢 Equipo IT prom.          80 pts  ─  ← resaltado │
+│ #4  🏢 Equipo G&C prom.         75 pts  ▼               │
+│ [Ver ranking]                                            │
+└──────────────────────────────────────────────────────────┘
+```
+(En desktop, ambas cards se muestran lado a lado.)
