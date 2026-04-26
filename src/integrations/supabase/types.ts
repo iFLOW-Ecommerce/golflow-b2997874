@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          created_at: string
+          id: string
+          points: number
+          position: number
+          scope: string
+          stage_group: string
+          team_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          points?: number
+          position: number
+          scope: string
+          stage_group: string
+          team_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          points?: number
+          position?: number
+          scope?: string
+          stage_group?: string
+          team_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "achievements_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       matches: {
         Row: {
           away_score: number | null
@@ -249,6 +290,7 @@ export type Database = {
         }
         Returns: number
       }
+      recalculate_achievements: { Args: never; Returns: undefined }
       recalculate_team_ranks: { Args: never; Returns: undefined }
       recalculate_user_ranks: { Args: never; Returns: undefined }
       snapshot_team_ranks: { Args: never; Returns: undefined }

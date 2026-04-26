@@ -11,6 +11,17 @@ import { TeamName } from "@/lib/country-flag";
 import { TrendBadge } from "@/lib/trend-badge";
 import { UserAvatar } from "@/lib/user-avatar";
 import { displayName, firstName } from "@/lib/display-name";
+import { AchievementChip } from "@/lib/achievement-chip";
+
+type StageGroup = "group" | "knockout" | "tournament";
+type Achievement = {
+  scope: "global" | "team";
+  team_id: string | null;
+  stage_group: StageGroup;
+  position: number;
+};
+
+const STAGE_ORDER: Record<StageGroup, number> = { tournament: 0, knockout: 1, group: 2 };
 
 const KNOCKOUT_STAGES = ["round_of_32", "round_of_16", "quarterfinal", "semifinal", "final"];
 
@@ -81,6 +92,7 @@ const Index = () => {
   const [predsByMatch, setPredsByMatch] = useState<Record<string, PredRow>>({});
   const [accuracy, setAccuracy] = useState<number | null>(null);
   const [streak, setStreak] = useState<number>(0);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
 
   useEffect(() => {
     document.title = "Inicio | Prode Mundial 2026";
@@ -90,7 +102,7 @@ const Index = () => {
     if (!user) return;
     const load = async () => {
       const nowIso = new Date().toISOString();
-      const [ranking, upcomingRes, recentRes, predsRes, profileRes, finishedRes] = await Promise.all([
+      const [ranking, upcomingRes, recentRes, predsRes, profileRes, finishedRes, achievementsRes] = await Promise.all([
         supabase
           .from("user_ranking" as any)
           .select("user_id, email, first_name, last_name, avatar_seed, team_id, team_name, total_points, current_rank, previous_rank, team_current_rank, team_previous_rank")
@@ -123,7 +135,13 @@ const Index = () => {
           .select("id, match_date")
           .eq("is_finished", true)
           .order("match_date", { ascending: true }),
+        supabase
+          .from("achievements" as any)
+          .select("scope, team_id, stage_group, position")
+          .eq("user_id", user.id),
       ]);
+
+      setAchievements(((achievementsRes.data ?? []) as unknown) as Achievement[]);
 
       setMyProfile((profileRes.data as any) ?? null);
 
@@ -270,6 +288,34 @@ const Index = () => {
                   )}
                 </div>
               )}
+
+              {user && achievements.length > 0 && (() => {
+                const sorted = [...achievements].sort((a, b) => {
+                  // globales primero, luego equipo
+                  if (a.scope !== b.scope) return a.scope === "global" ? -1 : 1;
+                  // dentro de cada scope: tournament -> knockout -> group
+                  return STAGE_ORDER[a.stage_group] - STAGE_ORDER[b.stage_group];
+                });
+                return (
+                  <div className="mt-4">
+                    <div className="text-[11px] uppercase tracking-wide opacity-90 font-semibold mb-2 flex items-center gap-1.5">
+                      <span>🎖️</span>
+                      <span>Logros</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {sorted.map((a, i) => (
+                        <AchievementChip
+                          key={`${a.scope}-${a.stage_group}-${a.team_id ?? "g"}-${i}`}
+                          scope={a.scope}
+                          stageGroup={a.stage_group}
+                          position={a.position}
+                          teamName={a.scope === "team" ? myTeamName : null}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             {user && myPosition && (

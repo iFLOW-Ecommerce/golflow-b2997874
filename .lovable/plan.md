@@ -1,73 +1,114 @@
+## Funcionalidad: Logros (Top 3 por etapa, global y por equipo)
 
-## Plan: Registro extendido con perfil completo
+### 1. Definición de "etapa" para logros
+- **`group`** → Fase de grupos (todos los partidos con `stage='group'`)
+- **`knockout`** → Eliminatorias (stages: `round_of_32`, `round_of_16`, `quarterfinal`, `semifinal`, `third_place`, `final`)
+- **`tournament`** → Torneo Mundial 2026 (todos los partidos)
 
-### 1. Migración de base de datos
+Una etapa se considera "completada" cuando **todos** los partidos de esa agrupación tienen `is_finished = true` y `home_score`/`away_score` no nulos.
 
-**Nueva tabla `teams`:**
+### 2. Backend — nueva tabla `achievements`
+
+Migración SQL nueva:
+
 ```sql
-CREATE TABLE public.teams (
+CREATE TABLE public.achievements (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name text NOT NULL UNIQUE,
-  created_at timestamptz NOT NULL DEFAULT now()
+  user_id uuid NOT NULL,
+  scope text NOT NULL CHECK (scope IN ('global','team')),
+  team_id uuid NULL REFERENCES public.teams(id) ON DELETE CASCADE,
+  stage_group text NOT NULL CHECK (stage_group IN ('group','knockout','tournament')),
+  position smallint NOT NULL CHECK (position BETWEEN 1 AND 3),
+  points integer NOT NULL DEFAULT 0,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (user_id, scope, COALESCE(team_id, '00000000-0000-0000-0000-000000000000'::uuid), stage_group)
 );
-ALTER TABLE public.teams ENABLE ROW LEVEL SECURITY;
 
--- Lectura pública para usuarios autenticados
-CREATE POLICY "Teams viewable by authenticated users"
-  ON public.teams FOR SELECT TO authenticated USING (true);
+ALTER TABLE public.achievements ENABLE ROW LEVEL SECURITY;
 
--- Solo admins pueden modificar
-CREATE POLICY "Admins manage teams" ON public.teams FOR ALL TO authenticated
-  USING (EXISTS (SELECT 1 FROM profiles WHERE user_id = auth.uid() AND is_admin = true))
-  WITH CHECK (EXISTS (SELECT 1 FROM profiles WHERE user_id = auth.uid() AND is_admin = true));
+CREATE POLICY "Achievements viewable by authenticated"
+  ON public.achievements FOR SELECT TO authenticated USING (true);
+```
+(Sólo SELECT pública; los inserts los hace una función `SECURITY DEFINER`.)
+
+### 3. Función SQL `recalculate_achievements()`
+
+`SECURITY DEFINER`. Lógica:
+
+1. Para cada `stage_group` (`group`, `knockout`, `tournament`):
+   - Verificar si **todos** los partidos de ese grupo están `is_finished = true` y con scores. Si no, saltarlo.
+2. Calcular puntos por usuario sumando `points_awarded` sólo de predicciones cuyo `match_id` pertenezca a esa etapa.
+3. **Global top 3**: ordenar usuarios por puntos DESC, `email` ASC; tomar top 3 con `points > 0`.
+4. **Team top 3**: para cada `team_id`, ordenar miembros del equipo por puntos DESC; tomar top 3 con `points > 0`.
+5. `DELETE FROM achievements` para esa etapa y reinsertar (idempotente).
+
+Se agregarán llamadas a `recalculate_achievements()` desde donde hoy se llama `recalculate_user_ranks()`/`recalculate_team_ranks()` en el flujo del Admin (al guardar resultados). Si no existe ese punto centralizado, se llamará desde `Admin.tsx` luego del update de matches.
+
+### 4. Frontend — Hero en `src/pages/Index.tsx`
+
+**Fetch nuevo** dentro del `Promise.all` actual:
+```ts
+supabase.from("achievements")
+  .select("scope, team_id, stage_group, position")
+  .eq("user_id", user.id)
 ```
 
-**Seed inicial de equipos** (14 equipos, con "Gente & Cultura" corregido):
-Operaciones CDN, Operaciones CDR, Operaciones CDT, Operaciones CDG, Operaciones CDQ, ecommerce, Comercial, IT, Administración & Finanzas, Gente & Cultura, Mantenimiento, Internacional, Liquidaciones, Tráfico.
+**Estado**: `const [achievements, setAchievements] = useState<Achievement[]>([])`.
 
-**Extender `profiles`:**
-```sql
-ALTER TABLE public.profiles
-  ADD COLUMN first_name text,
-  ADD COLUMN last_name text,
-  ADD COLUMN team_id uuid REFERENCES public.teams(id) ON DELETE SET NULL,
-  ADD COLUMN avatar_seed text;
+**Orden de render** (filtrar primero por scope, luego por stage_group):
+1. Globales: `tournament` → `knockout` → `group`
+2. Equipo: `tournament` → `knockout` → `group`
+
+**Etiquetas**:
+- Global: `#{position} Ranking Global` con prefijo según etapa: `Torneo:`, `Eliminatorias:`, `Fase de grupos:`
+- Equipo: `#{position} Ranking Equipo {teamName}` con mismos prefijos
+
+Ejemplos visibles:
+- 🏆 Fase de grupos: #1 Ranking Global
+- ⭐ Eliminatorias: #2 Ranking Equipo IT
+
+**Sección oculta si `achievements.length === 0`**.
+
+### 5. Componente `AchievementChip` (inline en Index o nuevo `src/lib/achievement-chip.tsx`)
+
+Mismo estilo visual que `MultiplierBadge` (rounded-full, fuente bold, padding compacto):
+
+```tsx
+// Global (verde neón)
+<span className="inline-flex items-center gap-1 rounded-full bg-emerald-400/15 text-emerald-300 border border-emerald-400/30 px-2.5 py-1 text-xs font-semibold">
+  🏆 {label}
+</span>
+
+// Equipo (amarillo neón)
+<span className="inline-flex items-center gap-1 rounded-full bg-yellow-300/15 text-yellow-200 border border-yellow-300/30 px-2.5 py-1 text-xs font-semibold">
+  ⭐ {label}
+</span>
 ```
 
-**Actualizar `handle_new_user`** para leer `raw_user_meta_data` y persistir `first_name`, `last_name`, `team_id`, `avatar_seed` enviados desde el signup.
+### 6. Ubicación en el Hero
 
-### 2. Pantalla de registro (`src/pages/Auth.tsx`)
+Debajo del bloque de chips de Precisión/Racha (después de la línea ~272 en `Index.tsx`), dentro del mismo `<div className="min-w-0">`:
 
-En la pestaña "Registrarme" agregar (en este orden, antes de email/password):
-- **Nombre** (input requerido)
-- **Apellido** (input requerido)
-- **Equipo** (Select con `teams` cargados desde DB, requerido)
-- **Avatar** (grid 4×2 con 8 opciones generadas con seeds `${tempUuid}-1..8`, estilo `bottts-neutral`). El seed se genera al montar el formulario con `crypto.randomUUID()` y se reutiliza al hacer signup.
+```tsx
+{achievements.length > 0 && (
+  <div className="mt-3">
+    <div className="text-[11px] uppercase tracking-wide opacity-80 font-medium mb-1.5">
+      🎖️ Logros
+    </div>
+    <div className="flex flex-wrap gap-1.5">
+      {sortedAchievements.map(a => <AchievementChip key={...} {...} />)}
+    </div>
+  </div>
+)}
+```
 
-URL avatar: `https://api.dicebear.com/9.x/bottts-neutral/svg?seed={seed}`.
+### 7. Archivos afectados
+- **Nueva migración**: tabla `achievements` + función `recalculate_achievements`
+- **`src/pages/Admin.tsx`**: invocar `supabase.rpc('recalculate_achievements')` después de guardar resultados (junto a las llamadas existentes de recálculo de ranks)
+- **`src/pages/Index.tsx`**: fetch + render de la sección Logros
+- **`src/lib/achievement-chip.tsx`** (nuevo): componente reutilizable
 
-Enviar todo en `options.data` del `signUp` para que `handle_new_user` los persista. Validar que todos los campos estén completos antes de submit.
-
-### 3. Componentes/helpers nuevos
-
-- **`src/lib/user-avatar.tsx`** — Componente `<UserAvatar seed size />` que renderiza el SVG de DiceBear (usando `<Avatar>` + `AvatarImage` ya existente). Fallback a iniciales si no hay seed.
-- **`src/lib/display-name.ts`** — Helper `displayName({first_name, last_name, email})` que devuelve "Nombre Apellido" o el email como fallback, y `firstName(...)` para el hero.
-
-### 4. Actualizar consultas y vistas en cliente
-
-Como `user_ranks` no incluye perfil, las páginas que lo usan ya hacen JOIN manual con `profiles`. Hay que extender esos selects para traer `first_name, last_name, avatar_seed, team:teams(name)`.
-
-- **`src/pages/Index.tsx`**:
-  - Hero: cargar perfil del usuario y mostrar `Hola, {firstName}` (fallback al email actual).
-  - Card Ranking: agregar `<UserAvatar>` antes del nombre y mostrar nombre completo en lugar de email.
-- **`src/pages/Ranking.tsx`**: reordenar columnas a `#`, `Avatar+Usuario`, `Equipo`, `Puntos`, `Tend.` y mostrar avatar+nombre completo+equipo.
-- **`src/components/AppSidebar.tsx`**: en el footer mostrar nombre completo (con avatar pequeño opcional) en lugar del email.
-
-### 5. Reglas y consideraciones
-
-- No tocar el flujo de login (sign in queda igual).
-- Usuarios existentes tendrán `first_name/last_name/team_id/avatar_seed` en NULL → se sigue mostrando el email como fallback hasta que editen su perfil (edición fuera de alcance de esta tarea).
-- No modificar lógica de puntos ni de ranking.
-- DiceBear sin colores forzados, paleta default.
-
-¿Procedo con la implementación?
+### 8. Consideraciones
+- Los logros se asignan sólo si el usuario tiene `points > 0` en esa etapa (evita "campeones" con 0 puntos cuando hay menos de 3 jugadores activos).
+- Si un equipo tiene menos de 3 miembros, sólo se otorgarán los logros que correspondan (1° y 2° si hay 2, etc.).
+- La función es idempotente: se puede correr múltiples veces sin duplicar.
