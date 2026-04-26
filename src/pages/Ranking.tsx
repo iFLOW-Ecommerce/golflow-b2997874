@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { BarChart3 } from "lucide-react";
+import { BarChart3, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TrendBadge } from "@/lib/trend-badge";
 import { UserAvatar } from "@/lib/user-avatar";
@@ -29,11 +29,22 @@ interface RankingRow {
   team_previous_rank: number | null;
 }
 
+interface TeamAvatarRow {
+  team_avatar_id: string;
+  team_id: string;
+  name: string;
+  total_points: number;
+  current_rank: number | null;
+  previous_rank: number | null;
+}
+
 const GLOBAL = "__global__";
+const INTER_AREAS = "__inter_areas__";
 
 const Ranking = () => {
   const { user } = useAuth();
   const [rows, setRows] = useState<RankingRow[]>([]);
+  const [teamAvatarRows, setTeamAvatarRows] = useState<TeamAvatarRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [scope, setScope] = useState<string>(GLOBAL);
   const [scopeReady, setScopeReady] = useState(false);
@@ -45,12 +56,31 @@ const Ranking = () => {
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("user_ranking" as any)
-        .select("user_id, email, first_name, last_name, avatar_seed, team_id, team_name, total_points, predictions_count, current_rank, previous_rank, team_current_rank, team_previous_rank")
-        .order("total_points", { ascending: false })
-        .order("email", { ascending: true });
-      if (!error && data) setRows(data as unknown as RankingRow[]);
+      const [rankingRes, avatarRes] = await Promise.all([
+        supabase
+          .from("user_ranking" as any)
+          .select("user_id, email, first_name, last_name, avatar_seed, team_id, team_name, total_points, predictions_count, current_rank, previous_rank, team_current_rank, team_previous_rank")
+          .order("total_points", { ascending: false })
+          .order("email", { ascending: true }),
+        supabase
+          .from("team_avatars" as any)
+          .select("id, team_id, name, team_avatar_ranks(total_points, current_rank, previous_rank)"),
+      ]);
+      if (!rankingRes.error && rankingRes.data) setRows(rankingRes.data as unknown as RankingRow[]);
+      if (!avatarRes.error && avatarRes.data) {
+        const mapped: TeamAvatarRow[] = (avatarRes.data as any[]).map((r) => {
+          const rank = Array.isArray(r.team_avatar_ranks) ? r.team_avatar_ranks[0] : r.team_avatar_ranks;
+          return {
+            team_avatar_id: r.id,
+            team_id: r.team_id,
+            name: r.name,
+            total_points: rank?.total_points ?? 0,
+            current_rank: rank?.current_rank ?? null,
+            previous_rank: rank?.previous_rank ?? null,
+          };
+        });
+        setTeamAvatarRows(mapped);
+      }
       setLoading(false);
     };
     load();
@@ -83,8 +113,10 @@ const Ranking = () => {
   }, [rows, myRow?.team_id]);
 
   const isGlobal = scope === GLOBAL;
+  const isInterAreas = scope === INTER_AREAS;
 
   const filtered = useMemo(() => {
+    if (isInterAreas) return [];
     if (isGlobal) return rows;
     return rows
       .filter((r) => r.team_id === scope)
@@ -92,11 +124,14 @@ const Ranking = () => {
         if (b.total_points !== a.total_points) return b.total_points - a.total_points;
         return (a.email ?? "").localeCompare(b.email ?? "");
       });
-  }, [rows, scope, isGlobal]);
+  }, [rows, scope, isGlobal, isInterAreas]);
 
-  const myIndex = filtered.findIndex((r) => r.user_id === user?.id);
-  const me = myIndex >= 0 ? filtered[myIndex] : null;
-  const myPosition = myIndex >= 0 ? myIndex + 1 : null;
+  const interAreasSorted = useMemo(() => {
+    return [...teamAvatarRows].sort((a, b) => {
+      if (b.total_points !== a.total_points) return b.total_points - a.total_points;
+      return a.name.localeCompare(b.name);
+    });
+  }, [teamAvatarRows]);
 
   // Compute global and team positions independently of selected scope
   const globalSorted = useMemo(() => rows, [rows]);
@@ -119,7 +154,9 @@ const Ranking = () => {
     return i >= 0 ? i + 1 : null;
   }, [teamSorted, user?.id]);
 
-  const scopeLabel = isGlobal
+  const scopeLabel = isInterAreas
+    ? "Inter Áreas"
+    : isGlobal
     ? "Ranking global"
     : `Equipo: ${teams.find((t) => t.id === scope)?.name ?? "—"}`;
 
@@ -138,12 +175,12 @@ const Ranking = () => {
     return <TrendBadge current={current} previous={previous} />;
   };
 
-  const rowClassFor = (pos: number, isMe: boolean) => {
+  const rowClassFor = (pos: number, highlight: boolean) => {
     const base: string[] = [];
     if (pos === 1) base.push("bg-yellow-500/10 border-l-4 border-l-yellow-500");
     else if (pos === 2) base.push("bg-slate-400/10 border-l-4 border-l-slate-400");
     else if (pos === 3) base.push("bg-amber-700/10 border-l-4 border-l-amber-700");
-    if (isMe) base.push("ring-2 ring-inset ring-primary bg-primary/10 hover:bg-primary/15");
+    if (highlight) base.push("ring-2 ring-inset ring-primary bg-primary/10 hover:bg-primary/15");
     return cn(...base);
   };
 
@@ -163,7 +200,7 @@ const Ranking = () => {
           </div>
         </div>
 
-        {myRow && (
+        {myRow && !isInterAreas && (
           <Card className="shadow-card border-primary/30 overflow-hidden">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Tu posición</CardTitle>
@@ -227,7 +264,11 @@ const Ranking = () => {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <CardTitle className="text-base">{scopeLabel}</CardTitle>
-                <CardDescription>Los puntos se actualizan cuando se cargan resultados reales.</CardDescription>
+                <CardDescription>
+                  {isInterAreas
+                    ? "Cada equipo compite con el promedio de puntos de sus miembros por partido."
+                    : "Los puntos se actualizan cuando se cargan resultados reales."}
+                </CardDescription>
               </div>
               <div className="w-full sm:w-64">
                 <Select value={scope} onValueChange={setScope}>
@@ -236,6 +277,7 @@ const Ranking = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value={GLOBAL}>🌐 Global</SelectItem>
+                    <SelectItem value={INTER_AREAS}>🏢 Inter Áreas</SelectItem>
                     {myTeam && (
                       <SelectGroup>
                         <SelectLabel>Mi equipo</SelectLabel>
@@ -262,6 +304,47 @@ const Ranking = () => {
                   <Skeleton key={i} className="h-10 w-full" />
                 ))}
               </div>
+            ) : isInterAreas ? (
+              interAreasSorted.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-6 text-center">
+                  Todavía no hay datos en Inter Áreas.
+                </p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-16">#</TableHead>
+                      <TableHead>Usuario</TableHead>
+                      <TableHead className="text-right">Puntos</TableHead>
+                      <TableHead className="w-20 text-center">Tend.</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {interAreasSorted.map((row, idx) => {
+                      const pos = idx + 1;
+                      const isMine = !!myRow?.team_id && row.team_id === myRow.team_id;
+                      return (
+                        <TableRow key={row.team_avatar_id} className={rowClassFor(pos, isMine)}>
+                          <TableCell>{positionCell(pos)}</TableCell>
+                          <TableCell className="truncate max-w-[240px] sm:max-w-none">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/15 text-primary shrink-0">
+                                <Building2 className="h-4 w-4" />
+                              </div>
+                              <span className={cn("truncate", isMine && "font-semibold")}>{row.name}</span>
+                              {isMine && <Badge variant="secondary" className="text-xs shrink-0">Mi área</Badge>}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right font-semibold">{row.total_points}</TableCell>
+                          <TableCell className="text-center">
+                            <TrendBadge current={row.current_rank} previous={row.previous_rank} />
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              )
             ) : filtered.length === 0 ? (
               <p className="text-sm text-muted-foreground py-6 text-center">
                 Todavía no hay jugadores en este ranking.

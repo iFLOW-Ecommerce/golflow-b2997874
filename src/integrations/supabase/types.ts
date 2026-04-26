@@ -188,6 +188,67 @@ export type Database = {
           },
         ]
       }
+      team_avatar_ranks: {
+        Row: {
+          current_rank: number | null
+          previous_rank: number | null
+          team_avatar_id: string
+          total_points: number
+          updated_at: string
+        }
+        Insert: {
+          current_rank?: number | null
+          previous_rank?: number | null
+          team_avatar_id: string
+          total_points?: number
+          updated_at?: string
+        }
+        Update: {
+          current_rank?: number | null
+          previous_rank?: number | null
+          team_avatar_id?: string
+          total_points?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_avatar_ranks_team_avatar_id_fkey"
+            columns: ["team_avatar_id"]
+            isOneToOne: true
+            referencedRelation: "team_avatars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_avatars: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          team_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          team_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_avatars_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: true
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teams: {
         Row: {
           created_at: string
@@ -291,8 +352,11 @@ export type Database = {
         Returns: number
       }
       recalculate_achievements: { Args: never; Returns: undefined }
+      recalculate_team_avatar_points: { Args: never; Returns: undefined }
+      recalculate_team_avatar_ranks: { Args: never; Returns: undefined }
       recalculate_team_ranks: { Args: never; Returns: undefined }
       recalculate_user_ranks: { Args: never; Returns: undefined }
+      snapshot_team_avatar_ranks: { Args: never; Returns: undefined }
       snapshot_team_ranks: { Args: never; Returns: undefined }
       snapshot_user_ranks: { Args: never; Returns: undefined }
       stage_multiplier: { Args: { _stage: string }; Returns: number }

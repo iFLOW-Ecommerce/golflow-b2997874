@@ -165,6 +165,7 @@ const Admin = () => {
     // Snapshot current_rank -> previous_rank BEFORE any points/ranks change
     await supabase.rpc("snapshot_user_ranks" as any);
     await supabase.rpc("snapshot_team_ranks" as any);
+    await supabase.rpc("snapshot_team_avatar_ranks" as any);
     let okCount = 0;
     let errCount = 0;
     for (const id of ids) {
@@ -184,6 +185,8 @@ const Admin = () => {
       await supabase.rpc("recalculate_user_ranks" as any);
       await supabase.rpc("recalculate_team_ranks" as any);
       await supabase.rpc("recalculate_achievements" as any);
+      await supabase.rpc("recalculate_team_avatar_points" as any);
+      await supabase.rpc("recalculate_team_avatar_ranks" as any);
     }
     setSaving(false);
     if (okCount > 0) {
