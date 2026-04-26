@@ -92,6 +92,7 @@ const Index = () => {
   const [predsByMatch, setPredsByMatch] = useState<Record<string, PredRow>>({});
   const [accuracy, setAccuracy] = useState<number | null>(null);
   const [streak, setStreak] = useState<number>(0);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
 
   useEffect(() => {
     document.title = "Inicio | Prode Mundial 2026";
