@@ -1,17 +1,50 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Trophy, BarChart3, CalendarClock, Clock } from "lucide-react";
+import { Trophy, BarChart3, CalendarClock, Sparkles } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { MultiplierBadge } from "@/lib/multiplier";
 import { TeamName } from "@/lib/country-flag";
 import { TrendBadge } from "@/lib/trend-badge";
 import { UserAvatar } from "@/lib/user-avatar";
 import { displayName, firstName } from "@/lib/display-name";
 import { AchievementChip } from "@/lib/achievement-chip";
+import { cn } from "@/lib/utils";
+
+const LOCK_MS = 60 * 60 * 1000; // 1h antes del partido (igual a /prediccion)
+
+const randomScore = (): number => {
+  const r = Math.random();
+  if (r < 0.35) return 0;
+  if (r < 0.7) return 1;
+  if (r < 0.9) return 2;
+  return 3;
+};
+
+const formatCountdown = (msRemaining: number): { text: string; tone: "gray" | "orange" | "red" | "closed" } => {
+  if (msRemaining <= 0) return { text: "Cerrado", tone: "closed" };
+  const totalSec = Math.floor(msRemaining / 1000);
+  const days = Math.floor(totalSec / 86400);
+  const hours = Math.floor((totalSec % 86400) / 3600);
+  const minutes = Math.floor((totalSec % 3600) / 60);
+  const seconds = totalSec % 60;
+  if (msRemaining > 24 * 60 * 60 * 1000) return { text: `${days}d ${hours}h`, tone: "gray" };
+  if (msRemaining > 4 * 60 * 60 * 1000) return { text: `${hours}h ${minutes}m`, tone: "orange" };
+  return { text: `${hours}h ${minutes}m ${seconds}s`, tone: "red" };
+};
+
+const toneClass = (tone: "gray" | "orange" | "red" | "closed") => {
+  switch (tone) {
+    case "orange": return "text-orange-500";
+    case "red": return "text-destructive";
+    case "closed": return "text-muted-foreground line-through";
+    default: return "text-muted-foreground";
+  }
+};
 
 type StageGroup = "group" | "knockout" | "tournament";
 type Achievement = {
