@@ -123,7 +123,10 @@ const Index = () => {
   const [myTeamTotal, setMyTeamTotal] = useState<number>(0);
   const [myTeamCurrentRank, setMyTeamCurrentRank] = useState<number | null>(null);
   const [myTeamPreviousRank, setMyTeamPreviousRank] = useState<number | null>(null);
-  const [rankingWindow, setRankingWindow] = useState<Array<{ position: number; user_id: string; email: string | null; first_name: string | null; last_name: string | null; avatar_seed: string | null; total_points: number; current_rank: number | null; previous_rank: number | null }>>([]);
+  const [rankingWindow, setRankingWindow] = useState<Array<{ position: number; user_id: string; email: string | null; first_name: string | null; last_name: string | null; avatar_seed: string | null; team_name: string | null; total_points: number; current_rank: number | null; previous_rank: number | null }>>([]);
+  const [teamRankingWindow, setTeamRankingWindow] = useState<Array<{ position: number; user_id: string; email: string | null; first_name: string | null; last_name: string | null; avatar_seed: string | null; total_points: number; team_current_rank: number | null; team_previous_rank: number | null }>>([]);
+  const [interAreasWindow, setInterAreasWindow] = useState<Array<{ position: number; team_avatar_id: string; team_id: string; name: string; total_points: number; current_rank: number | null; previous_rank: number | null }>>([]);
+  const [rankView, setRankView] = useState<"global" | "team">("global");
   const [upcoming, setUpcoming] = useState<MatchRow[]>([]);
   const [recent, setRecent] = useState<MatchRow[]>([]);
   const [predsByMatch, setPredsByMatch] = useState<Record<string, PredRow>>({});
