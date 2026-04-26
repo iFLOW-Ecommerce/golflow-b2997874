@@ -134,6 +134,48 @@ const Index = () => {
     document.title = "Inicio | Prode Mundial 2026";
   }, []);
 
+  // Tick para countdown en vivo
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const handleAutoPredict = async () => {
+    if (!user) return;
+    const pendientes = upcoming.filter(
+      (m) => !predsByMatch[m.id] && Date.now() < new Date(m.match_date).getTime() - LOCK_MS,
+    );
+    if (pendientes.length === 0) return;
+    setAutoPredicting(true);
+    const rows = pendientes.map((m) => ({
+      user_id: user.id,
+      match_id: m.id,
+      predicted_home_score: randomScore(),
+      predicted_away_score: randomScore(),
+    }));
+    const { error, data } = await supabase
+      .from("predictions")
+      .insert(rows)
+      .select("match_id, predicted_home_score, predicted_away_score, points_awarded");
+    setAutoPredicting(false);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+    setPredsByMatch((prev) => {
+      const next = { ...prev };
+      (data ?? []).forEach((p: any) => {
+        next[p.match_id] = p as PredRow;
+      });
+      return next;
+    });
+    toast({
+      title: "🪔 Predicciones automáticas",
+      description: `Se completaron ${pendientes.length} ${pendientes.length === 1 ? "predicción" : "predicciones"}.`,
+    });
+  };
+
+
   useEffect(() => {
     if (!user) return;
     const load = async () => {
