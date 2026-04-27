@@ -503,7 +503,7 @@ const Index = () => {
                 {/* Global */}
                 <div className="rounded-xl bg-card/80 backdrop-blur p-3 border border-border shadow-card">
                   <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
-                    <span>🌐</span>
+                    <Globe className="h-3 w-3 text-primary" />
                     <span>Global</span>
                   </div>
                   <div className="mt-1.5 flex items-baseline gap-1.5">
