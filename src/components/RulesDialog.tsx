@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -13,12 +20,7 @@ interface RulesDialogProps {
   onDismissForever?: () => void;
 }
 
-export const RulesDialog = ({
-  open,
-  onOpenChange,
-  showDontShowAgain = false,
-  onDismissForever,
-}: RulesDialogProps) => {
+export const RulesDialog = ({ open, onOpenChange, showDontShowAgain = false, onDismissForever }: RulesDialogProps) => {
   const [dontShow, setDontShow] = useState(false);
 
   useEffect(() => {
@@ -34,14 +36,14 @@ export const RulesDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={(o) => (o ? onOpenChange(true) : handleClose())}>
-      <DialogContent hideClose className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-2xl">
             <Trophy className="h-6 w-6 text-primary" />
             Reglas del juego
           </DialogTitle>
           <DialogDescription>
-            Predicciones del Mundial FIFA 2026. Acertá los resultados y sumá la mayor cantidad de puntos.
+            Pronosticá los partidos, sumá puntos y competí con todo iFLOW. Cuanto más aciertes, más arriba quedás.
           </DialogDescription>
         </DialogHeader>
 
@@ -71,7 +73,7 @@ export const RulesDialog = ({
                   <div className="text-2xl font-bold text-primary">+3</div>
                   <div className="text-xs font-medium mt-1">Acertar ganador</div>
                   <div className="text-[11px] text-muted-foreground mt-1">
-                    Si se define por penales, cuenta como empate
+                    Acertás quién gana o si empatan. Si se define por penales, cuenta como empate
                   </div>
                 </CardContent>
               </Card>
@@ -79,16 +81,14 @@ export const RulesDialog = ({
                 <CardContent className="pt-4 pb-4 text-center">
                   <div className="text-2xl font-bold text-primary">+2</div>
                   <div className="text-xs font-medium mt-1">Resultado exacto</div>
-                  <div className="text-[11px] text-muted-foreground mt-1">Marcador idéntico</div>
+                  <div className="text-[11px] text-muted-foreground mt-1">Sos crack.</div>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="pt-4 pb-4 text-center">
                   <div className="text-2xl font-bold text-primary">+1</div>
-                  <div className="text-xs font-medium mt-1">Por gol del partido</div>
-                  <div className="text-[11px] text-muted-foreground mt-1">
-                    Un 0–0 cuenta como 1 punto
-                  </div>
+                  <div className="text-xs font-medium mt-1">Por cada gol del partido</div>
+                  <div className="text-[11px] text-muted-foreground mt-1">Si sale 0–0 igualmente suma 1 punto</div>
                 </CardContent>
               </Card>
             </div>
@@ -112,17 +112,17 @@ export const RulesDialog = ({
                 <tbody className="divide-y">
                   <tr>
                     <td className="px-3 py-2 font-mono">0 – 0</td>
-                    <td className="px-3 py-2 text-muted-foreground">3 + 2 + 1</td>
+                    <td className="px-3 py-2 text-muted-foreground">3 (Ganador) + 2 (Resultado) + 1 (Goles)</td>
                     <td className="px-3 py-2 text-right font-bold text-primary">6 pts</td>
                   </tr>
                   <tr>
                     <td className="px-3 py-2 font-mono">1 – 0</td>
-                    <td className="px-3 py-2 text-muted-foreground">3 + 2 + 1</td>
+                    <td className="px-3 py-2 text-muted-foreground">3 (Ganador) + 2 (Resultado) + 1 (Goles)</td>
                     <td className="px-3 py-2 text-right font-bold text-primary">6 pts</td>
                   </tr>
                   <tr>
                     <td className="px-3 py-2 font-mono">5 – 4</td>
-                    <td className="px-3 py-2 text-muted-foreground">3 + 2 + 9</td>
+                    <td className="px-3 py-2 text-muted-foreground">3 (Ganador) + 2 (Resultado) + 9 (Goles)</td>
                     <td className="px-3 py-2 text-right font-bold text-primary">14 pts</td>
                   </tr>
                 </tbody>
@@ -140,18 +140,10 @@ export const RulesDialog = ({
                   Desde octavos de final, los puntos se multiplican. ¡Cuanto más cerca de la final, más valen!
                 </p>
                 <div className="flex flex-wrap gap-1.5 text-[11px] font-bold">
-                  <span className="inline-flex items-center gap-0.5 rounded-full bg-primary/10 text-primary px-2 py-0.5">
-                    Octavos <Zap className="h-3 w-3" fill="currentColor" />×2
-                  </span>
-                  <span className="inline-flex items-center gap-0.5 rounded-full bg-primary/10 text-primary px-2 py-0.5">
-                    Cuartos <Zap className="h-3 w-3" fill="currentColor" />×3
-                  </span>
-                  <span className="inline-flex items-center gap-0.5 rounded-full bg-primary/10 text-primary px-2 py-0.5">
-                    Semis <Zap className="h-3 w-3" fill="currentColor" />×4
-                  </span>
-                  <span className="inline-flex items-center gap-0.5 rounded-full bg-primary/10 text-primary px-2 py-0.5">
-                    Final <Zap className="h-3 w-3" fill="currentColor" />×5
-                  </span>
+                  <span className="rounded-full bg-primary/10 text-primary px-2 py-0.5">Octavos ⚡×2</span>
+                  <span className="rounded-full bg-primary/10 text-primary px-2 py-0.5">Cuartos ⚡×3</span>
+                  <span className="rounded-full bg-primary/10 text-primary px-2 py-0.5">Semis ⚡×4</span>
+                  <span className="rounded-full bg-primary/10 text-primary px-2 py-0.5">Final ⚡×5</span>
                 </div>
               </div>
             </CardContent>
@@ -161,11 +153,7 @@ export const RulesDialog = ({
         <DialogFooter className="flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           {showDontShowAgain ? (
             <div className="flex items-center gap-2">
-              <Checkbox
-                id="dont-show-rules"
-                checked={dontShow}
-                onCheckedChange={(c) => setDontShow(c === true)}
-              />
+              <Checkbox id="dont-show-rules" checked={dontShow} onCheckedChange={(c) => setDontShow(c === true)} />
               <Label htmlFor="dont-show-rules" className="text-sm cursor-pointer">
                 No volver a mostrar al inicio
               </Label>
