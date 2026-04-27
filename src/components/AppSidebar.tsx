@@ -1,6 +1,5 @@
 import { Trophy, Target, BarChart3, Shield, LogOut } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
 import logo from "@/assets/logo.png";
 import {
   Sidebar,
@@ -16,7 +15,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
 import { UserAvatar } from "@/lib/user-avatar";
 import { displayName } from "@/lib/display-name";
 
@@ -30,26 +28,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
-  const { signOut, user } = useAuth();
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [profile, setProfile] = useState<{ first_name: string | null; last_name: string | null; email: string | null; avatar_seed: string | null } | null>(null);
-
-  useEffect(() => {
-    if (!user) {
-      setIsAdmin(false);
-      setProfile(null);
-      return;
-    }
-    supabase
-      .from("profiles")
-      .select("is_admin, first_name, last_name, email, avatar_seed")
-      .eq("user_id", user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        setIsAdmin(!!(data as any)?.is_admin);
-        setProfile((data as any) ?? null);
-      });
-  }, [user]);
+  const { signOut, user, profile, isAdmin } = useAuth();
 
   const items = isAdmin
     ? [...baseItems, { title: "Admin", url: "/admin", icon: Shield }]

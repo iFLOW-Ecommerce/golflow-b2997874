@@ -14,6 +14,8 @@ import { Loader2, Save, ShieldAlert, Check } from "lucide-react";
 import { MultiplierBadge } from "@/lib/multiplier";
 import { TeamName } from "@/lib/country-flag";
 import { AdminPasswordResets } from "@/components/AdminPasswordResets";
+import { formatDate } from "@/lib/format";
+import { KO_STAGES } from "@/lib/constants";
 
 interface Match {
   id: string;
@@ -30,48 +32,14 @@ interface Match {
 type ScoreDraft = Record<string, { home: string; away: string }>;
 type TeamDraft = Record<string, { home: string; away: string }>;
 
-const KO_STAGES: { key: string; label: string }[] = [
-  { key: "round_of_32", label: "Dieciseisavos" },
-  { key: "round_of_16", label: "Octavos" },
-  { key: "quarterfinal", label: "Cuartos" },
-  { key: "semifinal", label: "Semifinales" },
-  { key: "third_place", label: "Tercer puesto" },
-  { key: "final", label: "Final" },
-];
-
-const formatDate = (iso: string) => {
-  try {
-    return new Date(iso).toLocaleString("es-AR", {
-      day: "2-digit",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    });
-  } catch {
-    return iso;
-  }
-};
-
 const Admin = () => {
-  const { user, loading } = useAuth();
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const { user, loading, isAdmin, profileLoading } = useAuth();
   const [matches, setMatches] = useState<Match[]>([]);
   const [scoreDraft, setScoreDraft] = useState<ScoreDraft>({});
   const [teamDraft, setTeamDraft] = useState<TeamDraft>({});
   const [loadingData, setLoadingData] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingTeams, setSavingTeams] = useState(false);
-
-  useEffect(() => {
-    if (!user) return;
-    supabase
-      .from("profiles")
-      .select("is_admin")
-      .eq("user_id", user.id)
-      .maybeSingle()
-      .then(({ data }) => setIsAdmin(!!data?.is_admin));
-  }, [user]);
 
   const loadMatches = async () => {
     const { data, error } = await supabase
@@ -99,7 +67,7 @@ const Admin = () => {
   };
 
   useEffect(() => {
-    if (isAdmin !== true) return;
+    if (!isAdmin) return;
     setLoadingData(true);
     loadMatches().finally(() => setLoadingData(false));
   }, [isAdmin]);
@@ -163,32 +131,32 @@ const Admin = () => {
       return;
     }
     setSaving(true);
-    // Snapshot current_rank -> previous_rank BEFORE any points/ranks change
-    await supabase.rpc("snapshot_user_ranks" as any);
-    await supabase.rpc("snapshot_team_ranks" as any);
-    await supabase.rpc("snapshot_team_avatar_ranks" as any);
-    let okCount = 0;
-    let errCount = 0;
-    for (const id of ids) {
-      const d = scoreDraft[id];
-      const home = d.home === "" ? null : parseInt(d.home, 10);
-      const away = d.away === "" ? null : parseInt(d.away, 10);
-      const isFinished = home !== null && away !== null;
-      const { error } = await supabase
-        .from("matches")
-        .update({ home_score: home, away_score: away, is_finished: isFinished })
-        .eq("id", id);
-      if (error) errCount++;
-      else okCount++;
-    }
+
+    // Updates en paralelo (independientes entre sí).
+    const results = await Promise.all(
+      ids.map((id) => {
+        const d = scoreDraft[id];
+        const home = d.home === "" ? null : parseInt(d.home, 10);
+        const away = d.away === "" ? null : parseInt(d.away, 10);
+        const isFinished = home !== null && away !== null;
+        return supabase
+          .from("matches")
+          .update({ home_score: home, away_score: away, is_finished: isFinished })
+          .eq("id", id);
+      }),
+    );
+    const okCount = results.filter((r) => !r.error).length;
+    const errCount = results.length - okCount;
+
     if (okCount > 0) {
-      // Recompute current_rank with the new points
-      await supabase.rpc("recalculate_user_ranks" as any);
-      await supabase.rpc("recalculate_team_ranks" as any);
-      await supabase.rpc("recalculate_achievements" as any);
-      await supabase.rpc("recalculate_team_avatar_points" as any);
-      await supabase.rpc("recalculate_team_avatar_ranks" as any);
+      // Wrapper admin que internamente hace snapshot + recálculos en orden correcto.
+      // Más rápido y seguro que llamar a las primitivas desde el cliente.
+      const { error: rpcError } = await supabase.rpc("admin_run_recalcs" as any, { p_snapshot: true });
+      if (rpcError) {
+        toast.error("Error recalculando puntos: " + rpcError.message);
+      }
     }
+
     setSaving(false);
     if (okCount > 0) {
       toast.success(`${okCount} resultado(s) guardado(s). Puntos y ranking recalculados.`);
@@ -203,19 +171,19 @@ const Admin = () => {
       return;
     }
     setSavingTeams(true);
-    let okCount = 0;
-    let errCount = 0;
-    for (const id of dirtyTeamIds) {
-      const d = teamDraft[id];
-      const home = d.home.trim() || "Por definir";
-      const away = d.away.trim() || "Por definir";
-      const { error } = await supabase
-        .from("matches")
-        .update({ home_team: home, away_team: away })
-        .eq("id", id);
-      if (error) errCount++;
-      else okCount++;
-    }
+    const results = await Promise.all(
+      dirtyTeamIds.map((id) => {
+        const d = teamDraft[id];
+        const home = d.home.trim() || "Por definir";
+        const away = d.away.trim() || "Por definir";
+        return supabase
+          .from("matches")
+          .update({ home_team: home, away_team: away })
+          .eq("id", id);
+      }),
+    );
+    const okCount = results.filter((r) => !r.error).length;
+    const errCount = results.length - okCount;
     setSavingTeams(false);
     if (okCount > 0) {
       toast.success(`${okCount} equipo(s) actualizado(s).`);
@@ -224,7 +192,7 @@ const Admin = () => {
     if (errCount > 0) toast.error(`${errCount} con error`);
   };
 
-  if (loading || isAdmin === null) {
+  if (loading || profileLoading) {
     return (
       <AppLayout>
         <div className="flex items-center justify-center py-20">
@@ -236,7 +204,7 @@ const Admin = () => {
 
   if (!user) return <Navigate to="/auth" replace />;
 
-  if (isAdmin === false) {
+  if (!isAdmin) {
     return (
       <AppLayout>
         <Card className="max-w-md mx-auto mt-10">

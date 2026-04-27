@@ -1,63 +1,121 @@
-## Flujo
+## Objetivo
+Mejorar performance, seguridad y mantenibilidad sin alterar la UI ni el comportamiento observable.
 
-1. Jugador olvida su clave → toca **"Olvidé mi clave"** en `/auth`.
-2. Se le pide su **email** + un **código de reseteo** (token de 8 caracteres) + nueva clave.
-3. El jugador le pide al admin que le genere el código desde `/admin`.
-4. El admin entra a `/admin`, abre la sección **"Reseteos de clave"**, busca al usuario, genera un código (válido por 24h, de un solo uso) y se lo pasa al jugador por un canal externo (WhatsApp, en persona, etc.).
-5. El jugador completa el formulario → la clave se actualiza.
+---
 
-Esto evita los riesgos de usar `user_id` directo (no es secreto, es enumerable) y no requiere que el sistema de email de auth esté configurado.
+### 1. Paralelizar snapshots y recálculos en `Admin.tsx` (con cuidado de dependencias)
 
-## Cambios en backend (migración)
+**Snapshots** (`handleSaveScores`, `handleSaveTeams`): los 3 escriben en tablas distintas y solo copian `current_rank → previous_rank`. Son independientes:
+```ts
+await Promise.all([
+  supabase.rpc("snapshot_user_ranks"),
+  supabase.rpc("snapshot_team_ranks"),
+  supabase.rpc("snapshot_team_avatar_ranks"),
+]);
+```
 
-Crear tabla `password_reset_codes`:
-- `id uuid pk`
-- `user_id uuid not null` (referencia lógica a `auth.users`, sin FK directa)
-- `code_hash text not null` (guardamos solo el hash SHA-256, nunca el código en claro)
-- `created_by uuid not null` (admin que lo generó)
-- `expires_at timestamptz not null` (default `now() + interval '24 hours'`)
-- `used_at timestamptz` (nullable; al consumirse se marca)
-- `created_at timestamptz default now()`
+**Recálculos**: hay una dependencia real → `recalculate_team_avatar_ranks` ordena por `total_points` que `recalculate_team_avatar_points` acaba de actualizar. Por eso:
+```ts
+await Promise.all([
+  supabase.rpc("recalculate_user_ranks"),
+  supabase.rpc("recalculate_team_ranks"),
+  supabase.rpc("recalculate_achievements"),
+  supabase.rpc("recalculate_team_avatar_points"),
+]);
+await supabase.rpc("recalculate_team_avatar_ranks"); // depende del anterior
+```
+Resultado: misma semántica, ~2-3× más rápido al guardar.
 
-RLS: solo admins pueden hacer `SELECT/INSERT`. Nadie hace `UPDATE/DELETE` directo desde el cliente — todo el consumo va por edge function con `service_role`.
+---
 
-Índice: `(user_id) where used_at is null` para invalidar códigos previos.
+### 2. Optimizar fetch del ranking del usuario en `Index.tsx`
 
-## Edge functions
+Hoy se trae toda la tabla `user_ranking` para encontrar la ventana del usuario. Cambiar a:
+- 1 query para obtener `current_rank` del usuario.
+- 1 query con `.gte("rank", rank-2).lte("rank", rank+2).order("rank")` para traer solo la ventana.
 
-**`admin-generate-reset-code`** (requiere admin autenticado)
-- Input: `{ user_id: string }`
-- Valida que el caller esté logueado y sea admin (consulta `profiles.is_admin`).
-- Genera código aleatorio de 8 chars alfanuméricos (sin caracteres ambiguos: 0/O, 1/I).
-- Invalida códigos previos del mismo usuario (`update used_at = now() where user_id = X and used_at is null`).
-- Inserta el nuevo registro con `code_hash = sha256(code)`.
-- Devuelve el código en claro **una sola vez** al admin.
+**Ventana de 5 con clamp** (importante, según indicaste):
+- Si `rank ≤ 2` → traer `rank 1..5`.
+- Si `rank ≥ total-1` → traer los últimos 5 (`total-4 .. total`).
+- En cualquier otro caso → `rank-2 .. rank+2`.
 
-**`reset-password-with-code`** (público, sin JWT)
-- Input: `{ email, code, new_password }` (validado con zod: password mín 6).
-- Busca el `user_id` asociado al email vía `auth.admin.listUsers` filtrado, o usando `profiles.email`.
-- Busca un código activo (`used_at is null`, `expires_at > now()`) cuyo `code_hash` matchee.
-- Si match → `auth.admin.updateUserById(user_id, { password })` y marca `used_at = now()`.
-- Rate limit básico: si fallan 5 intentos seguidos para un email en 15 min, rechaza (registrar en una tabla simple de intentos o usar un contador en `password_reset_codes`).
+Para conocer `total` se usa `count: "exact", head: true` en una query barata. Garantiza siempre 5 jugadores visibles cuando hay ≥5 en el sistema.
 
-Ambas funciones desplegadas con el patrón estándar de Lovable Cloud (CORS, validación de input).
+---
 
-## Cambios en frontend
+### 3. Centralizar `profile` + `isAdmin` en `useAuth`
 
-**`src/pages/Auth.tsx`**
-- Agregar link **"¿Olvidaste tu clave?"** debajo del form de signin.
-- Nueva tab/vista o dialog **"Restablecer clave"** con campos: email, código, nueva clave, confirmar clave.
-- Llama a `supabase.functions.invoke('reset-password-with-code', ...)` y muestra toast del resultado.
+Hoy `AppSidebar.tsx` y `Admin.tsx` hacen la misma query a `profiles`. Mover al provider:
+- `useAuth()` expone también `profile` e `isAdmin` (cargados una vez al iniciar sesión, refrescables).
+- Eliminar las queries duplicadas en `AppSidebar` y `Admin`.
 
-**`src/pages/Admin.tsx`**
-- Nueva sección **"Generar código de reseteo"** (al final, junto a las otras herramientas).
-- Selector/buscador de usuario (lista de `profiles` con nombre + email).
-- Botón **"Generar código"** → invoca `admin-generate-reset-code`.
-- Muestra el código generado en una card destacada con botón "Copiar al portapapeles" y aviso: *"Este código se mostrará una sola vez. Compartilo con el jugador por un canal seguro. Vence en 24h."*
+No cambia comportamiento, solo evita un round-trip extra por pantalla.
 
-## Seguridad
-- Códigos guardados solo como hash (no recuperables).
-- Expiración 24h + uso único.
-- Generación restringida a admins vía RLS + validación en edge function.
-- Rate limit en consumo para evitar brute-force del código de 8 chars.
-- Logs de auditoría implícitos en `created_by` y timestamps.
+---
+
+### 4. Aislar el countdown del Mundial en `Index.tsx`
+
+Hoy un `setInterval(1s)` re-renderiza toda la página (~900 líneas, varias cards, listas). Extraer a `<CountdownToWorldCup />` que se re-renderice solo a sí mismo cada segundo.
+
+Sin cambios visuales.
+
+---
+
+### 5. Cleanup de `useEffect` en `Index.tsx`, `Ranking.tsx`, `Prediccion.tsx`
+
+Agregar `let cancelled = false` y chequearlo antes de `setState` después de awaits, para evitar race conditions y warnings al desmontar componentes durante una carga.
+
+---
+
+### 6. Search server-side + debounce en `AdminPasswordResets.tsx`
+
+Hoy carga todos los emails de `profiles` al montar. Cambiar a:
+- Input con debounce (300ms).
+- Query con `.or("email.ilike.%q%,first_name.ilike.%q%,last_name.ilike.%q%").limit(20)`.
+- No carga nada hasta que el admin tipea ≥2 caracteres.
+
+Reduce memoria, transferencia y tiempo de carga inicial del tab "Usuarios".
+
+---
+
+### 7. Hardening de permisos de RPC (migration)
+
+Las funciones `recalculate_*` y `snapshot_*` son `SECURITY DEFINER`. Hoy cualquier usuario autenticado podría invocarlas vía PostgREST. Migration:
+```sql
+REVOKE EXECUTE ON FUNCTION public.recalculate_user_ranks() FROM anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.recalculate_team_ranks() FROM anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.recalculate_team_avatar_points() FROM anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.recalculate_team_avatar_ranks() FROM anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.recalculate_achievements() FROM anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.snapshot_user_ranks() FROM anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.snapshot_team_ranks() FROM anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.snapshot_team_avatar_ranks() FROM anon, authenticated;
+```
+Como Admin.tsx también llama estas RPCs desde el cliente, **además** se crea una RPC wrapper `admin_run_recalcs()` que valida `is_admin` y orquesta todo internamente, y `Admin.tsx` pasa a llamar solo a ese wrapper. Misma funcionalidad, sin exponer las primitivas.
+
+---
+
+### 8. Quitar `as any` y centralizar tipos
+
+- Definir interfaces para las vistas (`user_ranking`, `team_ranking`, etc.) en `src/lib/types.ts`.
+- Reemplazar los `as any` en pages/components por estos tipos.
+
+Mejora autocompletado y previene errores silenciosos.
+
+---
+
+### 9. Centralizar formatos y constantes
+
+- `src/lib/format.ts`: `formatDate`, `formatDateTime`, helpers de fechas (hoy duplicados entre `Admin.tsx`, `Index.tsx`, `Prediccion.tsx`).
+- `src/lib/constants.ts`: nombres de etapas, multiplicadores, labels.
+
+Sin cambios visuales — solo deduplicación.
+
+---
+
+### Garantías
+- **Cero cambios de UI**: ningún componente visual se modifica.
+- **Cero cambios de comportamiento**: misma lógica de puntos, snapshots, ranking y reset de claves.
+- **Migraciones reversibles**: solo `REVOKE` + creación de wrapper, no se borran funciones.
+
+¿Avanzo con todo en una sola pasada?

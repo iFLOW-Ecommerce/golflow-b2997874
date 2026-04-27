@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Trophy, BarChart3, CalendarClock, Sparkles, Building2, HelpCircle, Globe, Star, Award, CheckCircle2, Target, Crosshair, Moon, Sprout, Smile, Rocket, Flame, Crown, type LucideIcon } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { RulesDialog } from "@/components/RulesDialog";
+import { CountdownTicker } from "@/components/CountdownToWorldCup";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -16,9 +17,9 @@ import { UserAvatar } from "@/lib/user-avatar";
 import { displayName, firstName } from "@/lib/display-name";
 import { AchievementChip } from "@/lib/achievement-chip";
 import { cn } from "@/lib/utils";
+import { formatShortDate } from "@/lib/format";
+import { LOCK_MS } from "@/lib/constants";
 import heroStadium from "@/assets/hero-stadium.webp";
-
-const LOCK_MS = 60 * 60 * 1000; // 1h antes del partido (igual a /prediccion)
 
 const randomScore = (): number => {
   const r = Math.random();
@@ -79,19 +80,7 @@ type PredRow = {
   points_awarded: number;
 };
 
-const formatShortDate = (iso: string) => {
-  try {
-    return new Date(iso).toLocaleString("es-AR", {
-      day: "2-digit",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    });
-  } catch {
-    return iso;
-  }
-};
+
 
 const streakIcon = (n: number): LucideIcon => {
   if (n <= 0) return Moon;
@@ -103,13 +92,11 @@ const streakIcon = (n: number): LucideIcon => {
 };
 
 const Index = () => {
-  const { user } = useAuth();
+  const { user, profile: authProfile } = useAuth();
   const { toast } = useToast();
-  const [now, setNow] = useState<number>(Date.now());
   const [autoPredicting, setAutoPredicting] = useState(false);
   const [myPosition, setMyPosition] = useState<number | null>(null);
   const [myPoints, setMyPoints] = useState<number>(0);
-  const [myProfile, setMyProfile] = useState<{ first_name: string | null; last_name: string | null; email: string | null } | null>(null);
   const [globalTotal, setGlobalTotal] = useState<number>(0);
   const [myCurrentRank, setMyCurrentRank] = useState<number | null>(null);
   const [myPreviousRank, setMyPreviousRank] = useState<number | null>(null);
@@ -132,14 +119,13 @@ const Index = () => {
   const [streak, setStreak] = useState<number>(0);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
 
+  // myProfile equivalente al anterior, derivado del provider (ya cacheado).
+  const myProfile = authProfile
+    ? { first_name: authProfile.first_name, last_name: authProfile.last_name, email: authProfile.email }
+    : null;
+
   useEffect(() => {
     document.title = "Inicio | Prode Mundial 2026";
-  }, []);
-
-  // Tick para countdown en vivo
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
   }, []);
 
   // Onboarding: mostrar reglas la primera vez
@@ -190,9 +176,10 @@ const Index = () => {
 
   useEffect(() => {
     if (!user) return;
+    let cancelled = false;
     const load = async () => {
       const nowIso = new Date().toISOString();
-      const [ranking, upcomingRes, recentRes, predsRes, profileRes, finishedRes, achievementsRes, teamAvatarsRes] = await Promise.all([
+      const [ranking, upcomingRes, recentRes, predsRes, finishedRes, achievementsRes, teamAvatarsRes] = await Promise.all([
         supabase
           .from("user_ranking" as any)
           .select("user_id, email, first_name, last_name, avatar_seed, team_id, team_name, total_points, current_rank, previous_rank, team_current_rank, team_previous_rank")
@@ -216,11 +203,6 @@ const Index = () => {
           .select("match_id, predicted_home_score, predicted_away_score, points_awarded")
           .eq("user_id", user.id),
         supabase
-          .from("profiles")
-          .select("first_name, last_name, email")
-          .eq("user_id", user.id)
-          .maybeSingle(),
-        supabase
           .from("matches")
           .select("id, match_date")
           .eq("is_finished", true)
@@ -234,9 +216,10 @@ const Index = () => {
           .select("id, team_id, name, team_avatar_ranks(total_points, current_rank, previous_rank)"),
       ]);
 
+      if (cancelled) return;
+
       setAchievements(((achievementsRes.data ?? []) as unknown) as Achievement[]);
 
-      setMyProfile((profileRes.data as any) ?? null);
 
       const rows = ((ranking.data ?? []) as unknown) as Array<{ user_id: string; email: string | null; first_name: string | null; last_name: string | null; avatar_seed: string | null; team_id: string | null; team_name: string | null; total_points: number; current_rank: number | null; previous_rank: number | null; team_current_rank: number | null; team_previous_rank: number | null }>;
       setGlobalTotal(rows.length);
@@ -387,6 +370,9 @@ const Index = () => {
       }
     };
     load();
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   return (
@@ -543,6 +529,8 @@ const Index = () => {
           </div>
         </section>
 
+        <CountdownTicker>
+          {(now) => (
         <Card className="shadow-card">
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between gap-3">
@@ -645,6 +633,8 @@ const Index = () => {
             )}
           </CardContent>
         </Card>
+          )}
+        </CountdownTicker>
 
         <div className="grid gap-4 md:grid-cols-2">
           {/* Card A — Ranking individual con switch Global/Equipo */}
