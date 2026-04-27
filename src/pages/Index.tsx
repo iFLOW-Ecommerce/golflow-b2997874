@@ -792,13 +792,14 @@ const Index = () => {
             </CardHeader>
             <CardContent className="space-y-3">
               {interAreasWindow.length > 0 ? (
-                <ul className="divide-y divide-border rounded-lg border bg-card overflow-hidden">
+                <ul className="divide-y divide-border rounded-lg border bg-card">
                   {interAreasWindow.map((r) => {
                     const isMine = !!myTeamId && r.team_id === myTeamId;
+                    const cleanName = r.name.replace(/^Equipo\s+/i, "").replace(/\s+prom\.?$/i, "").trim() || r.name;
                     return (
                       <li
                         key={r.team_avatar_id}
-                        className={`flex items-center gap-2 px-3 py-2 text-sm ${
+                        className={`flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-2 text-sm ${
                           isMine ? "bg-primary/10 border-l-2 border-l-primary font-semibold" : ""
                         }`}
                       >
@@ -808,8 +809,8 @@ const Index = () => {
                         <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/15 text-primary shrink-0">
                           <Building2 className="h-4 w-4" />
                         </div>
-                        <span className="flex-1 min-w-0 truncate">{r.name}</span>
-                        <span className="shrink-0 text-xs tabular-nums flex items-center gap-2">
+                        <span className="flex-1 min-w-0 truncate">{cleanName}</span>
+                        <span className="shrink-0 ml-auto text-xs tabular-nums flex items-center gap-2 basis-auto">
                           <span className={isMine ? "text-primary" : "text-muted-foreground"}>
                             {r.total_points} pts
                           </span>
