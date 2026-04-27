@@ -456,7 +456,7 @@ const Prediccion = () => {
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 backdrop-blur px-2.5 py-1 text-xs font-medium text-primary border border-primary/30">
-                🏟️ {completedGroups}/48 grupos
+                🏟️ {completedGroups}/{groupMatches.length || 72} grupos
               </span>
               <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 backdrop-blur px-2.5 py-1 text-xs font-medium text-primary border border-primary/30">
                 🏆 {completedKO}/{koMatches.length || 31} eliminatorias
