@@ -500,39 +500,39 @@ const Index = () => {
             {user && myPosition && (
               <div className="grid grid-cols-2 md:grid-cols-1 gap-3 md:w-[200px]">
                 {/* Global */}
-                <div className="rounded-xl bg-white/10 backdrop-blur p-3 border border-white/15">
-                  <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide opacity-90 font-medium">
+                <div className="rounded-xl bg-card/80 backdrop-blur p-3 border border-border shadow-card">
+                  <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
                     <span>🌐</span>
                     <span>Global</span>
                   </div>
                   <div className="mt-1.5 flex items-baseline gap-1.5">
-                    <span className="text-2xl font-bold leading-none">#{myPosition}</span>
-                    <span className="text-xs opacity-80">de {globalTotal}</span>
+                    <span className="text-2xl font-bold leading-none text-foreground">#{myPosition}</span>
+                    <span className="text-xs text-muted-foreground">de {globalTotal}</span>
                   </div>
                   <div className="mt-1.5 flex items-center gap-1.5 text-xs">
-                    <span className="font-semibold">{myPoints} pts</span>
+                    <span className="font-semibold text-primary">{myPoints} pts</span>
                     <TrendBadge current={myCurrentRank} previous={myPreviousRank} />
                   </div>
                 </div>
 
                 {/* Team */}
-                <div className="rounded-xl bg-white/15 backdrop-blur p-3 border border-white/20">
-                  <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide opacity-90 font-medium">
+                <div className="rounded-xl bg-card/80 backdrop-blur p-3 border border-primary/30 shadow-card">
+                  <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-primary font-medium">
                     <span>⭐</span>
                     <span className="truncate">{myTeamName ?? "Sin equipo"}</span>
                   </div>
                   {myTeamId && myTeamPosition ? (
                     <>
                       <div className="mt-1.5 flex items-baseline gap-1.5">
-                        <span className="text-2xl font-bold leading-none">#{myTeamPosition}</span>
-                        <span className="text-xs opacity-80">de {myTeamTotal}</span>
+                        <span className="text-2xl font-bold leading-none text-foreground">#{myTeamPosition}</span>
+                        <span className="text-xs text-muted-foreground">de {myTeamTotal}</span>
                       </div>
                       <div className="mt-1.5 flex items-center gap-1.5 text-xs">
                         <TrendBadge current={myTeamCurrentRank} previous={myTeamPreviousRank} />
                       </div>
                     </>
                   ) : (
-                    <p className="mt-1.5 text-xs opacity-80">
+                    <p className="mt-1.5 text-xs text-muted-foreground">
                       {myTeamId ? "Sin posición aún." : "Sin equipo asignado."}
                     </p>
                   )}
