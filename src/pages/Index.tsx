@@ -570,7 +570,7 @@ const Index = () => {
                   >
                     <Sparkles className="h-4 w-4" />
                     <span className="hidden sm:inline">Predecir Automáticamente</span>
-                    <span className="sm:hidden">🪔 Auto</span>
+                    <span className="sm:hidden">Auto</span>
                   </Button>
                 );
               })()}
