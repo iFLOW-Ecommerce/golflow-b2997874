@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Trophy, BarChart3, CalendarClock, Sparkles, Building2, HelpCircle } from "lucide-react";
+import { Trophy, BarChart3, CalendarClock, Sparkles, Building2, HelpCircle, Globe, Star, Award, CheckCircle2, Target, Crosshair, Moon, Sprout, Smile, Rocket, Flame, Crown, type LucideIcon } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { RulesDialog } from "@/components/RulesDialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
