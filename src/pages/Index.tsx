@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Trophy, BarChart3, CalendarClock, Sparkles, Building2 } from "lucide-react";
+import { Trophy, BarChart3, CalendarClock, Sparkles, Building2, HelpCircle } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
+import { RulesDialog } from "@/components/RulesDialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -127,6 +128,8 @@ const Index = () => {
   const [teamRankingWindow, setTeamRankingWindow] = useState<Array<{ position: number; user_id: string; email: string | null; first_name: string | null; last_name: string | null; avatar_seed: string | null; total_points: number; team_current_rank: number | null; team_previous_rank: number | null }>>([]);
   const [interAreasWindow, setInterAreasWindow] = useState<Array<{ position: number; team_avatar_id: string; team_id: string; name: string; total_points: number; current_rank: number | null; previous_rank: number | null }>>([]);
   const [rankView, setRankView] = useState<"global" | "team">("global");
+  const [rulesOpen, setRulesOpen] = useState(false);
+  const [rulesAutoOpened, setRulesAutoOpened] = useState(false);
   const [upcoming, setUpcoming] = useState<MatchRow[]>([]);
   const [recent, setRecent] = useState<MatchRow[]>([]);
   const [predsByMatch, setPredsByMatch] = useState<Record<string, PredRow>>({});
@@ -143,6 +146,16 @@ const Index = () => {
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
+
+  // Onboarding: mostrar reglas la primera vez
+  useEffect(() => {
+    if (!user || rulesAutoOpened) return;
+    const dismissed = localStorage.getItem(`prode_rules_dismissed_${user.id}`);
+    if (!dismissed) {
+      setRulesOpen(true);
+      setRulesAutoOpened(true);
+    }
+  }, [user, rulesAutoOpened]);
 
   const handleAutoPredict = async () => {
     if (!user) return;
@@ -383,6 +396,14 @@ const Index = () => {
 
   return (
     <AppLayout>
+      <RulesDialog
+        open={rulesOpen}
+        onOpenChange={setRulesOpen}
+        showDontShowAgain={rulesAutoOpened}
+        onDismissForever={() => {
+          if (user) localStorage.setItem(`prode_rules_dismissed_${user.id}`, "1");
+        }}
+      />
       <div className="max-w-4xl mx-auto space-y-6">
         <section
           className="rounded-2xl p-6 md:p-10 text-primary-foreground shadow-elegant"
@@ -390,11 +411,22 @@ const Index = () => {
         >
           <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
             <div className="min-w-0">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 backdrop-blur">
-                  <Trophy className="h-5 w-5" />
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 backdrop-blur">
+                    <Trophy className="h-5 w-5" />
+                  </div>
+                  <span className="text-sm font-medium opacity-90">Mundial 2026</span>
                 </div>
-                <span className="text-sm font-medium opacity-90">Mundial 2026</span>
+                <button
+                  type="button"
+                  onClick={() => setRulesOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur px-3 py-1.5 text-xs font-medium border border-white/20 transition-colors"
+                  title="Ver reglas del juego"
+                >
+                  <HelpCircle className="h-3.5 w-3.5" />
+                  Reglas
+                </button>
               </div>
               <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">
                 Bienvenido al Prode Mundial 2026
