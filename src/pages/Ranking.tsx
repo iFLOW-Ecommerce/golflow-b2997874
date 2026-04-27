@@ -336,6 +336,7 @@ const Ranking = () => {
                     {interAreasSorted.map((row, idx) => {
                       const pos = idx + 1;
                       const isMine = !!myRow?.team_id && row.team_id === myRow.team_id;
+                      const cleanName = row.name.replace(/^Equipo\s+/i, "").replace(/\s+prom\.?$/i, "").trim() || row.name;
                       return (
                         <TableRow key={row.team_avatar_id} className={rowClassFor(pos, isMine)}>
                           <TableCell>{positionCell(pos)}</TableCell>
@@ -344,7 +345,7 @@ const Ranking = () => {
                               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/15 text-primary shrink-0">
                                 <Building2 className="h-4 w-4" />
                               </div>
-                              <span className={cn("truncate", isMine && "font-semibold")}>{row.name}</span>
+                              <span className={cn("truncate", isMine && "font-semibold")}>{cleanName}</span>
                               {isMine && <Badge variant="secondary" className="text-xs shrink-0">Mi área</Badge>}
                             </div>
                           </TableCell>
