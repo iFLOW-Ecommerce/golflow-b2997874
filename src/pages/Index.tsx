@@ -396,6 +396,14 @@ const Index = () => {
 
   return (
     <AppLayout>
+      <RulesDialog
+        open={rulesOpen}
+        onOpenChange={setRulesOpen}
+        showDontShowAgain={rulesAutoOpened}
+        onDismissForever={() => {
+          if (user) localStorage.setItem(`prode_rules_dismissed_${user.id}`, "1");
+        }}
+      />
       <div className="max-w-4xl mx-auto space-y-6">
         <section
           className="rounded-2xl p-6 md:p-10 text-primary-foreground shadow-elegant"
