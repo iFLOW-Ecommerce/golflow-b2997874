@@ -292,12 +292,27 @@ const Ranking = () => {
                     <SelectValue placeholder="Elegí un ranking" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={GLOBAL}>🌐 Global</SelectItem>
-                    <SelectItem value={INTER_AREAS}>🏢 Inter Áreas</SelectItem>
+                    <SelectItem value={GLOBAL}>
+                      <span className="inline-flex items-center gap-2">
+                        <Globe className="h-3.5 w-3.5 text-primary" />
+                        Global
+                      </span>
+                    </SelectItem>
+                    <SelectItem value={INTER_AREAS}>
+                      <span className="inline-flex items-center gap-2">
+                        <Building2 className="h-3.5 w-3.5 text-primary" />
+                        Inter Áreas
+                      </span>
+                    </SelectItem>
                     {myTeam && (
                       <SelectGroup>
                         <SelectLabel>Mi equipo</SelectLabel>
-                        <SelectItem value={myTeam.id}>⭐ {myTeam.name}</SelectItem>
+                        <SelectItem value={myTeam.id}>
+                          <span className="inline-flex items-center gap-2">
+                            <Star className="h-3.5 w-3.5 text-primary" fill="currentColor" />
+                            {myTeam.name}
+                          </span>
+                        </SelectItem>
                       </SelectGroup>
                     )}
                     {otherTeams.length > 0 && (
