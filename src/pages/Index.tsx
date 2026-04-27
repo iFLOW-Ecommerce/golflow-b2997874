@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Trophy, BarChart3, CalendarClock, Sparkles, Building2, HelpCircle, Globe, Star, Award, CheckCircle2, Target, Crosshair, Moon, Sprout, Smile, Rocket, Flame, Crown, type LucideIcon } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { RulesDialog } from "@/components/RulesDialog";
+import { CountdownTicker } from "@/components/CountdownToWorldCup";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -16,6 +17,8 @@ import { UserAvatar } from "@/lib/user-avatar";
 import { displayName, firstName } from "@/lib/display-name";
 import { AchievementChip } from "@/lib/achievement-chip";
 import { cn } from "@/lib/utils";
+import { formatShortDate } from "@/lib/format";
+import { LOCK_MS } from "@/lib/constants";
 import heroStadium from "@/assets/hero-stadium.webp";
 
 const LOCK_MS = 60 * 60 * 1000; // 1h antes del partido (igual a /prediccion)
