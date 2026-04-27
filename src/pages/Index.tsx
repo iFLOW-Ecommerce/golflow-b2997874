@@ -21,8 +21,6 @@ import { formatShortDate } from "@/lib/format";
 import { LOCK_MS } from "@/lib/constants";
 import heroStadium from "@/assets/hero-stadium.webp";
 
-const LOCK_MS = 60 * 60 * 1000; // 1h antes del partido (igual a /prediccion)
-
 const randomScore = (): number => {
   const r = Math.random();
   if (r < 0.35) return 0;
