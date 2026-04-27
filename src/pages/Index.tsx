@@ -624,8 +624,11 @@ const Index = () => {
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex items-start gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary">
-                      <CalendarClock className="h-5 w-5 text-primary" />
+                    <div
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-background/40 backdrop-blur border border-primary/60 text-primary"
+                      style={{ boxShadow: "0 0 12px hsl(var(--primary) / 0.55), inset 0 0 8px hsl(var(--primary) / 0.25)" }}
+                    >
+                      <CalendarClock className="h-5 w-5" style={{ filter: "drop-shadow(0 0 6px hsl(var(--primary) / 0.9))" }} />
                     </div>
                     <div className="min-w-0">
                       <CardTitle className="text-base">Próximos partidos</CardTitle>
@@ -731,8 +734,11 @@ const Index = () => {
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary">
-                    <BarChart3 className="h-5 w-5 text-primary" />
+                  <div
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-background/40 backdrop-blur border border-primary/60 text-primary"
+                    style={{ boxShadow: "0 0 12px hsl(var(--primary) / 0.55), inset 0 0 8px hsl(var(--primary) / 0.25)" }}
+                  >
+                    <BarChart3 className="h-5 w-5" style={{ filter: "drop-shadow(0 0 6px hsl(var(--primary) / 0.9))" }} />
                   </div>
                   <div className="min-w-0">
                     <CardTitle className="text-base">Ranking</CardTitle>
@@ -857,8 +863,11 @@ const Index = () => {
           <Card className="shadow-card">
             <CardHeader className="pb-3">
               <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary">
-                  <Building2 className="h-5 w-5 text-primary" />
+                <div
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-background/40 backdrop-blur border border-primary/60 text-primary"
+                  style={{ boxShadow: "0 0 12px hsl(var(--primary) / 0.55), inset 0 0 8px hsl(var(--primary) / 0.25)" }}
+                >
+                  <Building2 className="h-5 w-5" style={{ filter: "drop-shadow(0 0 6px hsl(var(--primary) / 0.9))" }} />
                 </div>
                 <div className="min-w-0">
                   <CardTitle className="text-base">Inter Áreas</CardTitle>
@@ -913,8 +922,11 @@ const Index = () => {
         <Card className="shadow-card">
           <CardHeader className="pb-3">
             <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary">
-                <CalendarClock className="h-5 w-5 text-primary" />
+              <div
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-background/40 backdrop-blur border border-primary/60 text-primary"
+                style={{ boxShadow: "0 0 12px hsl(var(--primary) / 0.55), inset 0 0 8px hsl(var(--primary) / 0.25)" }}
+              >
+                <CalendarClock className="h-5 w-5" style={{ filter: "drop-shadow(0 0 6px hsl(var(--primary) / 0.9))" }} />
               </div>
               <div className="min-w-0">
                 <CardTitle className="text-base">Últimos partidos</CardTitle>
