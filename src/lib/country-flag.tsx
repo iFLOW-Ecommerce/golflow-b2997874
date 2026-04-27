@@ -60,14 +60,13 @@ export const CountryFlag = ({ name, size = 18, className = "" }: CountryFlagProp
   const code = FLAG_MAP[name.trim()];
   
   if (code === null) {
-    // "Por definir" - mostrar emoji de mundo
+    // "Por definir" - mostrar icono de mundo neon
     return (
-      <span
-        style={{ fontSize: size, verticalAlign: "middle", lineHeight: 1 }}
-        className={`inline-block ${className}`}
-      >
-        🌍
-      </span>
+      <Globe
+        className={`inline-block shrink-0 align-[-3px] text-primary ${className}`}
+        style={{ width: size, height: size }}
+        aria-label="Por definir"
+      />
     );
   }
   
