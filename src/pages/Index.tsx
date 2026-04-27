@@ -182,7 +182,7 @@ const Index = () => {
       return next;
     });
     toast({
-      title: "🪔 Predicciones automáticas",
+      title: "Predicciones automáticas",
       description: `Se completaron ${pendientes.length} ${pendientes.length === 1 ? "predicción" : "predicciones"}.`,
     });
   };
