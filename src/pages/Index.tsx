@@ -633,6 +633,8 @@ const Index = () => {
             )}
           </CardContent>
         </Card>
+          )}
+        </CountdownTicker>
 
         <div className="grid gap-4 md:grid-cols-2">
           {/* Card A — Ranking individual con switch Global/Equipo */}
