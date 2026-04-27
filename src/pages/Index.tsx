@@ -407,27 +407,25 @@ const Index = () => {
       />
       <div className="max-w-4xl mx-auto space-y-6">
         <section
-          className="hero-stadium -mx-4 md:-mx-6 -mt-4 md:-mt-6 px-4 md:px-6 pt-32 md:pt-48 pb-8 md:pb-10 text-foreground"
+          className="hero-stadium relative -mx-4 md:-mx-6 -mt-4 md:-mt-6 px-4 md:px-6 pt-32 md:pt-48 pb-8 md:pb-10 text-foreground"
           style={{ ["--hero-image" as any]: `url(${heroStadium})` }}
         >
+          <button
+            type="button"
+            onClick={() => setRulesOpen(true)}
+            className="absolute top-4 right-4 md:top-6 md:right-6 z-10 inline-flex items-center gap-1.5 rounded-full bg-primary/15 hover:bg-primary/25 backdrop-blur px-3 py-1.5 text-xs font-medium text-primary border border-primary/30 transition-colors"
+            title="Ver reglas del juego"
+          >
+            <HelpCircle className="h-3.5 w-3.5" />
+            Reglas
+          </button>
           <div className="max-w-4xl mx-auto grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
             <div className="min-w-0">
-              <div className="flex items-center justify-between gap-3 mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-elegant">
-                    <Trophy className="h-5 w-5" />
-                  </div>
-                  <span className="inline-flex items-center rounded-full bg-background/50 backdrop-blur px-2.5 py-0.5 text-xs font-semibold text-primary border border-primary/30">Mundial 2026</span>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-elegant">
+                  <Trophy className="h-5 w-5" />
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setRulesOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 hover:bg-primary/25 backdrop-blur px-3 py-1.5 text-xs font-medium text-primary border border-primary/30 transition-colors"
-                  title="Ver reglas del juego"
-                >
-                  <HelpCircle className="h-3.5 w-3.5" />
-                  Reglas
-                </button>
+                <span className="inline-flex items-center rounded-full bg-background/50 backdrop-blur px-2.5 py-0.5 text-xs font-semibold text-primary border border-primary/30">Mundial 2026</span>
               </div>
               <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-3 text-white [text-shadow:_0_2px_12px_rgba(0,0,0,0.85),_0_1px_2px_rgba(0,0,0,0.9)]">
                 Bienvenido al Prode Mundial 2026
