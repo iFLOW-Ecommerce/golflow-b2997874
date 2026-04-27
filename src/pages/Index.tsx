@@ -93,19 +93,13 @@ const formatShortDate = (iso: string) => {
   }
 };
 
-const streakEmoji = (n: number) => {
-  if (n <= 0) return "😴";
-  if (n === 1) return "🌱";
-  if (n === 2) return "😁";
-  if (n === 3) return "😎";
-  if (n === 4) return "🚀";
-  if (n === 5) return "✨";
-  if (n === 6) return "🔥";
-  if (n === 7) return "🔥🔥";
-  if (n === 8) return "🔥🔥🔥";
-  if (n === 9) return "👑";
-  if (n === 10) return "👑👑";
-  return "👑👑👑";
+const streakIcon = (n: number): LucideIcon => {
+  if (n <= 0) return Moon;
+  if (n === 1) return Sprout;
+  if (n <= 3) return Smile;
+  if (n <= 5) return Rocket;
+  if (n <= 8) return Flame;
+  return Crown;
 };
 
 const Index = () => {
