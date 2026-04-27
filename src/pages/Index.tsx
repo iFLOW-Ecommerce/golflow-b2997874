@@ -699,14 +699,14 @@ const Index = () => {
             <CardContent className="space-y-3">
               {rankView === "global" ? (
                 rankingWindow.length > 0 && (
-                  <ul className="divide-y divide-border rounded-lg border bg-card overflow-hidden">
+                  <ul className="divide-y divide-border rounded-lg border bg-card">
                     {rankingWindow.map((r) => {
                       const isMe = r.user_id === user?.id;
                       const name = displayName(r);
                       return (
                         <li
                           key={r.user_id}
-                          className={`flex items-center gap-2 px-3 py-2 text-sm ${
+                          className={`flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-2 text-sm ${
                             isMe ? "bg-primary/10 border-l-2 border-l-primary font-semibold" : ""
                           }`}
                         >
@@ -714,7 +714,7 @@ const Index = () => {
                             #{r.position}
                           </span>
                           <UserAvatar seed={r.avatar_seed} name={name} className="h-7 w-7 shrink-0" />
-                          <span className="flex-1 min-w-0 truncate">
+                          <span className="flex-1 min-w-0">
                             <span className="block truncate">{name}</span>
                             {r.team_name && (
                               <span className="block text-[11px] text-muted-foreground truncate font-normal">
@@ -722,7 +722,7 @@ const Index = () => {
                               </span>
                             )}
                           </span>
-                          <span className="shrink-0 text-xs tabular-nums flex items-center gap-2">
+                          <span className="shrink-0 ml-auto text-xs tabular-nums flex items-center gap-2 basis-auto">
                             <span className={isMe ? "text-primary" : "text-muted-foreground"}>
                               {r.total_points} pts
                             </span>
@@ -735,14 +735,14 @@ const Index = () => {
                 )
               ) : (
                 teamRankingWindow.length > 0 ? (
-                  <ul className="divide-y divide-border rounded-lg border bg-card overflow-hidden">
+                  <ul className="divide-y divide-border rounded-lg border bg-card">
                     {teamRankingWindow.map((r) => {
                       const isMe = r.user_id === user?.id;
                       const name = displayName(r);
                       return (
                         <li
                           key={r.user_id}
-                          className={`flex items-center gap-2 px-3 py-2 text-sm ${
+                          className={`flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-2 text-sm ${
                             isMe ? "bg-primary/10 border-l-2 border-l-primary font-semibold" : ""
                           }`}
                         >
@@ -751,7 +751,7 @@ const Index = () => {
                           </span>
                           <UserAvatar seed={r.avatar_seed} name={name} className="h-7 w-7 shrink-0" />
                           <span className="flex-1 min-w-0 truncate">{name}</span>
-                          <span className="shrink-0 text-xs tabular-nums flex items-center gap-2">
+                          <span className="shrink-0 ml-auto text-xs tabular-nums flex items-center gap-2 basis-auto">
                             <span className={isMe ? "text-primary" : "text-muted-foreground"}>
                               {r.total_points} pts
                             </span>
