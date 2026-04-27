@@ -67,7 +67,7 @@ const Admin = () => {
   };
 
   useEffect(() => {
-    if (isAdmin !== true) return;
+    if (!isAdmin) return;
     setLoadingData(true);
     loadMatches().finally(() => setLoadingData(false));
   }, [isAdmin]);
