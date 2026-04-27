@@ -395,7 +395,7 @@ const Admin = () => {
                 ) : (
                   <ScrollArea className="h-[60vh] pr-2">
                     <div className="space-y-2">
-                      {groupMatches.map((m) => renderScoreRow(m))}
+                      {groupMatches.map((m) => renderScoreRow(m, { showDate: true }))}
                     </div>
                   </ScrollArea>
                 )}
