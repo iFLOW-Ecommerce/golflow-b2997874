@@ -16,6 +16,7 @@ import { UserAvatar } from "@/lib/user-avatar";
 import { displayName, firstName } from "@/lib/display-name";
 import { AchievementChip } from "@/lib/achievement-chip";
 import { cn } from "@/lib/utils";
+import heroStadium from "@/assets/hero-stadium.webp";
 
 const LOCK_MS = 60 * 60 * 1000; // 1h antes del partido (igual a /prediccion)
 
@@ -406,8 +407,8 @@ const Index = () => {
       />
       <div className="max-w-4xl mx-auto space-y-6">
         <section
-          className="rounded-2xl p-6 md:p-10 text-primary-foreground shadow-elegant"
-          style={{ background: "var(--gradient-hero)" }}
+          className="hero-stadium rounded-2xl p-6 md:p-10 text-primary-foreground shadow-elegant border border-border/40"
+          style={{ ["--hero-image" as any]: `url(${heroStadium})` }}
         >
           <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
             <div className="min-w-0">
