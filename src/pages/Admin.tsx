@@ -132,37 +132,24 @@ const Admin = () => {
     }
     setSaving(true);
 
-    // Updates en paralelo (independientes entre sí).
-    const results = await Promise.all(
-      ids.map((id) => {
-        const d = scoreDraft[id];
-        const home = d.home === "" ? null : parseInt(d.home, 10);
-        const away = d.away === "" ? null : parseInt(d.away, 10);
-        const isFinished = home !== null && away !== null;
-        return supabase
-          .from("matches")
-          .update({ home_score: home, away_score: away, is_finished: isFinished })
-          .eq("id", id);
-      }),
-    );
-    const okCount = results.filter((r) => !r.error).length;
-    const errCount = results.length - okCount;
+    const updates = ids.map((id) => {
+      const d = scoreDraft[id];
+      return {
+        id,
+        home_score: d.home === "" ? null : parseInt(d.home, 10),
+        away_score: d.away === "" ? null : parseInt(d.away, 10),
+      };
+    });
 
-    if (okCount > 0) {
-      // Wrapper admin que internamente hace snapshot + recálculos en orden correcto.
-      // Más rápido y seguro que llamar a las primitivas desde el cliente.
-      const { error: rpcError } = await supabase.rpc("admin_run_recalcs" as any, { p_snapshot: true });
-      if (rpcError) {
-        toast.error("Error recalculando puntos: " + rpcError.message);
-      }
-    }
+    // El backend hace snapshot de ranks ANTES de actualizar resultados y recalcular puntos.
+    const { error } = await supabase.rpc("admin_save_match_scores" as any, { p_updates: updates });
 
     setSaving(false);
-    if (okCount > 0) {
-      toast.success(`${okCount} resultado(s) guardado(s). Puntos y ranking recalculados.`);
+    if (!error) {
+      toast.success(`${updates.length} resultado(s) guardado(s). Puntos y ranking recalculados.`);
       await loadMatches();
     }
-    if (errCount > 0) toast.error(`${errCount} con error`);
+    if (error) toast.error("Error guardando resultados: " + error.message);
   };
 
   const handleSaveTeams = async () => {
