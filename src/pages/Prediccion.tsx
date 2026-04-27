@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MultiplierBadge, getStageMultiplier } from "@/lib/multiplier";
 import { TeamName, stripFlagEmoji } from "@/lib/country-flag";
+import heroStadium from "@/assets/hero-stadium.webp";
 
 type Match = {
   id: string;
@@ -434,25 +435,35 @@ const Prediccion = () => {
   return (
     <AppLayout>
       <div className="max-w-4xl mx-auto space-y-6">
-        <header className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary">
-              <Target className="h-5 w-5 text-primary" />
+        <section
+          className="hero-stadium relative -mx-4 md:-mx-6 -mt-4 md:-mt-6 px-4 md:px-6 pt-32 md:pt-48 pb-8 md:pb-10 text-foreground"
+          style={{ ["--hero-image" as any]: `url(${heroStadium})` }}
+        >
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-elegant">
+                <Target className="h-5 w-5" />
+              </div>
+              <span className="inline-flex items-center rounded-full bg-background/50 backdrop-blur px-2.5 py-0.5 text-xs font-semibold text-primary border border-primary/30">
+                Mundial 2026
+              </span>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">Mi Predicción</h1>
-              <p className="text-sm text-muted-foreground">Mundial 2026</p>
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-3 text-white [text-shadow:_0_2px_12px_rgba(0,0,0,0.85),_0_1px_2px_rgba(0,0,0,0.9)]">
+              Mi Predicción
+            </h1>
+            <p className="inline-block rounded-lg bg-background/55 backdrop-blur-sm px-3 py-1.5 text-base text-white border border-white/10">
+              Cargá tus pronósticos y seguí tu progreso.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 backdrop-blur px-2.5 py-1 text-xs font-medium text-primary border border-primary/30">
+                🏟️ {completedGroups}/48 grupos
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 backdrop-blur px-2.5 py-1 text-xs font-medium text-primary border border-primary/30">
+                🏆 {completedKO}/{koMatches.length || 31} eliminatorias
+              </span>
             </div>
           </div>
-          <div className="flex flex-col items-end gap-1">
-            <Badge variant="secondary" className="text-sm">
-              {completedGroups}/48 grupos
-            </Badge>
-            <Badge variant="secondary" className="text-sm">
-              {completedKO}/{koMatches.length || 31} eliminatorias
-            </Badge>
-          </div>
-        </header>
+        </section>
 
         {loading ? (
           <div className="flex items-center justify-center py-20 text-muted-foreground">

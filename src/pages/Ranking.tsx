@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { TrendBadge } from "@/lib/trend-badge";
 import { UserAvatar } from "@/lib/user-avatar";
 import { displayName as fmtName } from "@/lib/display-name";
+import heroStadium from "@/assets/hero-stadium.webp";
 
 interface RankingRow {
   user_id: string;
@@ -190,15 +191,27 @@ const Ranking = () => {
   return (
     <AppLayout>
       <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary">
-            <BarChart3 className="h-5 w-5 text-primary" />
+        <section
+          className="hero-stadium relative -mx-4 md:-mx-6 -mt-4 md:-mt-6 px-4 md:px-6 pt-32 md:pt-48 pb-8 md:pb-10 text-foreground"
+          style={{ ["--hero-image" as any]: `url(${heroStadium})` }}
+        >
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-elegant">
+                <BarChart3 className="h-5 w-5" />
+              </div>
+              <span className="inline-flex items-center rounded-full bg-background/50 backdrop-blur px-2.5 py-0.5 text-xs font-semibold text-primary border border-primary/30">
+                Mundial 2026
+              </span>
+            </div>
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-3 text-white [text-shadow:_0_2px_12px_rgba(0,0,0,0.85),_0_1px_2px_rgba(0,0,0,0.9)]">
+              Ranking
+            </h1>
+            <p className="inline-block rounded-lg bg-background/55 backdrop-blur-sm px-3 py-1.5 text-base text-white border border-white/10">
+              Todos los jugadores ordenados por puntos.
+            </p>
           </div>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Ranking</h1>
-            <p className="text-sm text-muted-foreground">Todos los jugadores ordenados por puntos.</p>
-          </div>
-        </div>
+        </section>
 
         {myRow && !isInterAreas && (
           <Card className="shadow-card border-primary/30 overflow-hidden">
