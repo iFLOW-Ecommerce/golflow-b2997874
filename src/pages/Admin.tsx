@@ -282,7 +282,11 @@ const Admin = () => {
               {formatDate(m.match_date)}
             </span>
           )}
-          {m.is_finished && <Badge variant="secondary" className="text-xs">✓</Badge>}
+          {m.is_finished && (
+            <Badge variant="secondary" className="text-xs gap-1 text-primary">
+              <Check className="h-3 w-3" strokeWidth={3} />
+            </Badge>
+          )}
         </div>
         <div className="flex-1 grid grid-cols-[1fr_auto_1fr] items-center gap-2 min-w-0">
           <span className="text-sm font-medium text-right truncate">
