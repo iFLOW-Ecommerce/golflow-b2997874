@@ -432,10 +432,14 @@ const Index = () => {
                 return (
                   <p className="mt-2 inline-flex flex-wrap items-center gap-1.5 rounded-lg bg-background/55 backdrop-blur-sm px-3 py-1.5 text-sm text-white border border-white/10">
                     {missing === 0 ? (
-                      <span>🏖️ Estás al día con tus predicciones</span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <CheckCircle2 className="h-4 w-4 text-primary" fill="currentColor" />
+                        Estás al día con tus predicciones
+                      </span>
                     ) : (
                       <>
-                        <span>🎯 Te faltan</span>
+                        <Target className="h-4 w-4 text-primary" fill="currentColor" />
+                        <span>Te faltan</span>
                         <span className="font-bold bg-primary/25 px-1.5 py-0.5 rounded-md text-primary border border-primary/40">
                           {missing} {missing === 1 ? "predicción" : "predicciones"}
                         </span>
@@ -448,15 +452,20 @@ const Index = () => {
               {user && (accuracy !== null || streak >= 0) && (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {accuracy !== null && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 backdrop-blur px-2.5 py-1 text-xs font-medium text-primary border border-primary/30">
-                      🔍 Precisión {accuracy}%
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 backdrop-blur px-2.5 py-1 text-xs font-medium text-primary border border-primary/30">
+                      <Crosshair className="h-3.5 w-3.5" />
+                      Precisión {accuracy}%
                     </span>
                   )}
-                  {accuracy !== null && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 backdrop-blur px-2.5 py-1 text-xs font-medium text-primary border border-primary/30">
-                      Racha: {streak} {streakEmoji(streak)}
-                    </span>
-                  )}
+                  {accuracy !== null && (() => {
+                    const StreakIcon = streakIcon(streak);
+                    return (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 backdrop-blur px-2.5 py-1 text-xs font-medium text-primary border border-primary/30">
+                        <StreakIcon className="h-3.5 w-3.5" fill="currentColor" />
+                        Racha: {streak}
+                      </span>
+                    );
+                  })()}
                 </div>
               )}
 
