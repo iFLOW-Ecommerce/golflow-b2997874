@@ -24,7 +24,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-14 flex items-center gap-2 border-b border-border bg-card px-3 sticky top-0 z-10">
             <SidebarTrigger />
-            <h2 className="text-sm font-medium text-foreground">Prode Mundial 2026</h2>
+            <h2 className="text-sm font-medium text-foreground">Prode iFLOW Mundial 2026</h2>
           </header>
           <main className="flex-1 p-4 md:p-6 overflow-x-hidden">{children}</main>
         </div>

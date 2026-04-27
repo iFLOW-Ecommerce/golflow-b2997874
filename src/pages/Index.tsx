@@ -1,6 +1,26 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Trophy, BarChart3, CalendarClock, Sparkles, Building2, HelpCircle, Globe, Star, Award, CheckCircle2, Target, Crosshair, Moon, Sprout, Smile, Rocket, Flame, Crown, type LucideIcon } from "lucide-react";
+import {
+  Trophy,
+  BarChart3,
+  CalendarClock,
+  Sparkles,
+  Building2,
+  HelpCircle,
+  Globe,
+  Star,
+  Award,
+  CheckCircle2,
+  Target,
+  Crosshair,
+  Moon,
+  Sprout,
+  Smile,
+  Rocket,
+  Flame,
+  Crown,
+  type LucideIcon,
+} from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { RulesDialog } from "@/components/RulesDialog";
 import { CountdownTicker } from "@/components/CountdownToWorldCup";
@@ -43,10 +63,14 @@ const formatCountdown = (msRemaining: number): { text: string; tone: "gray" | "o
 
 const toneClass = (tone: "gray" | "orange" | "red" | "closed") => {
   switch (tone) {
-    case "orange": return "text-orange-500";
-    case "red": return "text-destructive";
-    case "closed": return "text-muted-foreground line-through";
-    default: return "text-muted-foreground";
+    case "orange":
+      return "text-orange-500";
+    case "red":
+      return "text-destructive";
+    case "closed":
+      return "text-muted-foreground line-through";
+    default:
+      return "text-muted-foreground";
   }
 };
 
@@ -80,8 +104,6 @@ type PredRow = {
   points_awarded: number;
 };
 
-
-
 const streakIcon = (n: number): LucideIcon => {
   if (n <= 0) return Moon;
   if (n === 1) return Sprout;
@@ -106,9 +128,44 @@ const Index = () => {
   const [myTeamTotal, setMyTeamTotal] = useState<number>(0);
   const [myTeamCurrentRank, setMyTeamCurrentRank] = useState<number | null>(null);
   const [myTeamPreviousRank, setMyTeamPreviousRank] = useState<number | null>(null);
-  const [rankingWindow, setRankingWindow] = useState<Array<{ position: number; user_id: string; email: string | null; first_name: string | null; last_name: string | null; avatar_seed: string | null; team_name: string | null; total_points: number; current_rank: number | null; previous_rank: number | null }>>([]);
-  const [teamRankingWindow, setTeamRankingWindow] = useState<Array<{ position: number; user_id: string; email: string | null; first_name: string | null; last_name: string | null; avatar_seed: string | null; total_points: number; team_current_rank: number | null; team_previous_rank: number | null }>>([]);
-  const [interAreasWindow, setInterAreasWindow] = useState<Array<{ position: number; team_avatar_id: string; team_id: string; name: string; total_points: number; current_rank: number | null; previous_rank: number | null }>>([]);
+  const [rankingWindow, setRankingWindow] = useState<
+    Array<{
+      position: number;
+      user_id: string;
+      email: string | null;
+      first_name: string | null;
+      last_name: string | null;
+      avatar_seed: string | null;
+      team_name: string | null;
+      total_points: number;
+      current_rank: number | null;
+      previous_rank: number | null;
+    }>
+  >([]);
+  const [teamRankingWindow, setTeamRankingWindow] = useState<
+    Array<{
+      position: number;
+      user_id: string;
+      email: string | null;
+      first_name: string | null;
+      last_name: string | null;
+      avatar_seed: string | null;
+      total_points: number;
+      team_current_rank: number | null;
+      team_previous_rank: number | null;
+    }>
+  >([]);
+  const [interAreasWindow, setInterAreasWindow] = useState<
+    Array<{
+      position: number;
+      team_avatar_id: string;
+      team_id: string;
+      name: string;
+      total_points: number;
+      current_rank: number | null;
+      previous_rank: number | null;
+    }>
+  >([]);
   const [rankView, setRankView] = useState<"global" | "team">("global");
   const [rulesOpen, setRulesOpen] = useState(false);
   const [rulesAutoOpened, setRulesAutoOpened] = useState(false);
@@ -173,55 +230,69 @@ const Index = () => {
     });
   };
 
-
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
     const load = async () => {
       const nowIso = new Date().toISOString();
-      const [ranking, upcomingRes, recentRes, predsRes, finishedRes, achievementsRes, teamAvatarsRes] = await Promise.all([
-        supabase
-          .from("user_ranking" as any)
-          .select("user_id, email, first_name, last_name, avatar_seed, team_id, team_name, total_points, current_rank, previous_rank, team_current_rank, team_previous_rank")
-          .order("total_points", { ascending: false })
-          .order("email", { ascending: true }),
-        supabase
-          .from("matches")
-          .select("id, stage, home_team, away_team, match_date, home_score, away_score, is_finished")
-          .gte("match_date", nowIso)
-          .order("match_date", { ascending: true })
-          .limit(5),
-        supabase
-          .from("matches")
-          .select("id, stage, home_team, away_team, match_date, home_score, away_score, is_finished")
-          .lt("match_date", nowIso)
-          .eq("is_finished", true)
-          .order("match_date", { ascending: false })
-          .limit(5),
-        supabase
-          .from("predictions")
-          .select("match_id, predicted_home_score, predicted_away_score, points_awarded")
-          .eq("user_id", user.id),
-        supabase
-          .from("matches")
-          .select("id, match_date")
-          .eq("is_finished", true)
-          .order("match_date", { ascending: true }),
-        supabase
-          .from("achievements" as any)
-          .select("scope, team_id, stage_group, position")
-          .eq("user_id", user.id),
-        supabase
-          .from("team_avatars" as any)
-          .select("id, team_id, name, team_avatar_ranks(total_points, current_rank, previous_rank)"),
-      ]);
+      const [ranking, upcomingRes, recentRes, predsRes, finishedRes, achievementsRes, teamAvatarsRes] =
+        await Promise.all([
+          supabase
+            .from("user_ranking" as any)
+            .select(
+              "user_id, email, first_name, last_name, avatar_seed, team_id, team_name, total_points, current_rank, previous_rank, team_current_rank, team_previous_rank",
+            )
+            .order("total_points", { ascending: false })
+            .order("email", { ascending: true }),
+          supabase
+            .from("matches")
+            .select("id, stage, home_team, away_team, match_date, home_score, away_score, is_finished")
+            .gte("match_date", nowIso)
+            .order("match_date", { ascending: true })
+            .limit(5),
+          supabase
+            .from("matches")
+            .select("id, stage, home_team, away_team, match_date, home_score, away_score, is_finished")
+            .lt("match_date", nowIso)
+            .eq("is_finished", true)
+            .order("match_date", { ascending: false })
+            .limit(5),
+          supabase
+            .from("predictions")
+            .select("match_id, predicted_home_score, predicted_away_score, points_awarded")
+            .eq("user_id", user.id),
+          supabase
+            .from("matches")
+            .select("id, match_date")
+            .eq("is_finished", true)
+            .order("match_date", { ascending: true }),
+          supabase
+            .from("achievements" as any)
+            .select("scope, team_id, stage_group, position")
+            .eq("user_id", user.id),
+          supabase
+            .from("team_avatars" as any)
+            .select("id, team_id, name, team_avatar_ranks(total_points, current_rank, previous_rank)"),
+        ]);
 
       if (cancelled) return;
 
-      setAchievements(((achievementsRes.data ?? []) as unknown) as Achievement[]);
+      setAchievements((achievementsRes.data ?? []) as unknown as Achievement[]);
 
-
-      const rows = ((ranking.data ?? []) as unknown) as Array<{ user_id: string; email: string | null; first_name: string | null; last_name: string | null; avatar_seed: string | null; team_id: string | null; team_name: string | null; total_points: number; current_rank: number | null; previous_rank: number | null; team_current_rank: number | null; team_previous_rank: number | null }>;
+      const rows = (ranking.data ?? []) as unknown as Array<{
+        user_id: string;
+        email: string | null;
+        first_name: string | null;
+        last_name: string | null;
+        avatar_seed: string | null;
+        team_id: string | null;
+        team_name: string | null;
+        total_points: number;
+        current_rank: number | null;
+        previous_rank: number | null;
+        team_current_rank: number | null;
+        team_previous_rank: number | null;
+      }>;
       setGlobalTotal(rows.length);
       const idx = rows.findIndex((r) => r.user_id === user.id);
       if (idx >= 0) {
@@ -240,7 +311,10 @@ const Index = () => {
         // Ventana global (5 alrededor del usuario)
         let start = idx - 2;
         let end = idx + 2;
-        if (start < 0) { end += -start; start = 0; }
+        if (start < 0) {
+          end += -start;
+          start = 0;
+        }
         if (end > rows.length - 1) {
           start = Math.max(0, start - (end - (rows.length - 1)));
           end = rows.length - 1;
@@ -273,7 +347,10 @@ const Index = () => {
 
           let tStart = tIdx - 2;
           let tEnd = tIdx + 2;
-          if (tStart < 0) { tEnd += -tStart; tStart = 0; }
+          if (tStart < 0) {
+            tEnd += -tStart;
+            tStart = 0;
+          }
           if (tEnd > teamRows.length - 1) {
             tStart = Math.max(0, tStart - (tEnd - (teamRows.length - 1)));
             tEnd = teamRows.length - 1;
@@ -304,30 +381,33 @@ const Index = () => {
 
       // Inter-Áreas: ventana alrededor del área del usuario (o top 5 si no tiene)
       const avatarsRaw = (teamAvatarsRes.data ?? []) as any[];
-      const avatars = avatarsRaw.map((r) => {
-        const rank = Array.isArray(r.team_avatar_ranks) ? r.team_avatar_ranks[0] : r.team_avatar_ranks;
-        return {
-          team_avatar_id: r.id as string,
-          team_id: r.team_id as string,
-          name: r.name as string,
-          total_points: (rank?.total_points as number) ?? 0,
-          current_rank: (rank?.current_rank as number | null) ?? null,
-          previous_rank: (rank?.previous_rank as number | null) ?? null,
-        };
-      }).sort((a, b) => {
-        if (b.total_points !== a.total_points) return b.total_points - a.total_points;
-        return a.name.localeCompare(b.name);
-      });
+      const avatars = avatarsRaw
+        .map((r) => {
+          const rank = Array.isArray(r.team_avatar_ranks) ? r.team_avatar_ranks[0] : r.team_avatar_ranks;
+          return {
+            team_avatar_id: r.id as string,
+            team_id: r.team_id as string,
+            name: r.name as string,
+            total_points: (rank?.total_points as number) ?? 0,
+            current_rank: (rank?.current_rank as number | null) ?? null,
+            previous_rank: (rank?.previous_rank as number | null) ?? null,
+          };
+        })
+        .sort((a, b) => {
+          if (b.total_points !== a.total_points) return b.total_points - a.total_points;
+          return a.name.localeCompare(b.name);
+        });
       const myTeamIdLocal = idx >= 0 ? rows[idx].team_id : null;
-      const myAvatarIdx = myTeamIdLocal
-        ? avatars.findIndex((a) => a.team_id === myTeamIdLocal)
-        : -1;
+      const myAvatarIdx = myTeamIdLocal ? avatars.findIndex((a) => a.team_id === myTeamIdLocal) : -1;
       let aStart = 0;
       let aEnd = Math.min(4, avatars.length - 1);
       if (myAvatarIdx >= 0) {
         aStart = myAvatarIdx - 2;
         aEnd = myAvatarIdx + 2;
-        if (aStart < 0) { aEnd += -aStart; aStart = 0; }
+        if (aStart < 0) {
+          aEnd += -aStart;
+          aStart = 0;
+        }
         if (aEnd > avatars.length - 1) {
           aStart = Math.max(0, aStart - (aEnd - (avatars.length - 1)));
           aEnd = avatars.length - 1;
@@ -350,9 +430,7 @@ const Index = () => {
 
       // Accuracy & streak: only over finished matches the user predicted
       const finishedMatches = (finishedRes.data ?? []) as Array<{ id: string; match_date: string }>;
-      const resolved = finishedMatches
-        .map((m) => ({ m, p: map[m.id] }))
-        .filter((x) => x.p);
+      const resolved = finishedMatches.map((m) => ({ m, p: map[m.id] })).filter((x) => x.p);
 
       if (resolved.length === 0) {
         setAccuracy(null);
@@ -405,36 +483,41 @@ const Index = () => {
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-elegant">
                   <Trophy className="h-5 w-5" />
                 </div>
-                <span className="inline-flex items-center rounded-full bg-background/50 backdrop-blur px-2.5 py-0.5 text-xs font-semibold text-primary border border-primary/30">Mundial 2026</span>
+                <span className="inline-flex items-center rounded-full bg-background/50 backdrop-blur px-2.5 py-0.5 text-xs font-semibold text-primary border border-primary/30">
+                  Mundial 2026
+                </span>
               </div>
               <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-3 text-white [text-shadow:_0_2px_12px_rgba(0,0,0,0.85),_0_1px_2px_rgba(0,0,0,0.9)]">
-                Bienvenido al Prode Mundial 2026
+                Bienvenido al Prode iFLOW Mundial 2026
               </h1>
               <p className="inline-block rounded-lg bg-background/55 backdrop-blur-sm px-3 py-1.5 text-base text-white border border-white/10">
-                {user ? `Hola, ${firstName(myProfile ?? { email: user.email ?? null })}.` : ""} Predecí los partidos y competí con tus amigos.
+                {user ? `Hola, ${firstName(myProfile ?? { email: user.email ?? null })}.` : ""} Predecí los partidos y
+                competí con todo iFLOW.
               </p>
-              {user && upcoming.length > 0 && (() => {
-                const missing = upcoming.filter((m) => !predsByMatch[m.id]).length;
-                return (
-                  <p className="mt-2 inline-flex flex-wrap items-center gap-1.5 rounded-lg bg-background/55 backdrop-blur-sm px-3 py-1.5 text-sm text-white border border-white/10">
-                    {missing === 0 ? (
-                      <span className="inline-flex items-center gap-1.5">
-                        <CheckCircle2 className="h-4 w-4 text-primary" fill="currentColor" />
-                        Estás al día con tus predicciones
-                      </span>
-                    ) : (
-                      <>
-                        <Target className="h-4 w-4 text-primary" fill="currentColor" />
-                        <span>Te faltan</span>
-                        <span className="font-bold bg-primary/25 px-1.5 py-0.5 rounded-md text-primary border border-primary/40">
-                          {missing} {missing === 1 ? "predicción" : "predicciones"}
+              {user &&
+                upcoming.length > 0 &&
+                (() => {
+                  const missing = upcoming.filter((m) => !predsByMatch[m.id]).length;
+                  return (
+                    <p className="mt-2 inline-flex flex-wrap items-center gap-1.5 rounded-lg bg-background/55 backdrop-blur-sm px-3 py-1.5 text-sm text-white border border-white/10">
+                      {missing === 0 ? (
+                        <span className="inline-flex items-center gap-1.5">
+                          <CheckCircle2 className="h-4 w-4 text-primary" fill="currentColor" />
+                          Estás al día con tus predicciones
                         </span>
-                        <span>para estar al día</span>
-                      </>
-                    )}
-                  </p>
-                );
-              })()}
+                      ) : (
+                        <>
+                          <Target className="h-4 w-4 text-primary" fill="currentColor" />
+                          <span>Te faltan</span>
+                          <span className="font-bold bg-primary/25 px-1.5 py-0.5 rounded-md text-primary border border-primary/40">
+                            {missing} {missing === 1 ? "predicción" : "predicciones"}
+                          </span>
+                          <span>para estar al día</span>
+                        </>
+                      )}
+                    </p>
+                  );
+                })()}
               {user && (accuracy !== null || streak >= 0) && (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {accuracy !== null && (
@@ -443,45 +526,48 @@ const Index = () => {
                       Precisión {accuracy}%
                     </span>
                   )}
-                  {accuracy !== null && (() => {
-                    const StreakIcon = streakIcon(streak);
-                    return (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 backdrop-blur px-2.5 py-1 text-xs font-medium text-primary border border-primary/30">
-                        <StreakIcon className="h-3.5 w-3.5" fill="currentColor" />
-                        Racha: {streak}
-                      </span>
-                    );
-                  })()}
+                  {accuracy !== null &&
+                    (() => {
+                      const StreakIcon = streakIcon(streak);
+                      return (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 backdrop-blur px-2.5 py-1 text-xs font-medium text-primary border border-primary/30">
+                          <StreakIcon className="h-3.5 w-3.5" fill="currentColor" />
+                          Racha: {streak}
+                        </span>
+                      );
+                    })()}
                 </div>
               )}
 
-              {user && achievements.length > 0 && (() => {
-                const sorted = [...achievements].sort((a, b) => {
-                  // globales primero, luego equipo
-                  if (a.scope !== b.scope) return a.scope === "global" ? -1 : 1;
-                  // dentro de cada scope: tournament -> knockout -> group
-                  return STAGE_ORDER[a.stage_group] - STAGE_ORDER[b.stage_group];
-                });
-                return (
-                  <div className="mt-4">
-                    <div className="text-[11px] uppercase tracking-wide text-foreground/85 font-semibold mb-2 flex items-center gap-1.5 drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]">
-                      <Award className="h-3.5 w-3.5 text-primary" fill="currentColor" />
-                      <span>Logros</span>
+              {user &&
+                achievements.length > 0 &&
+                (() => {
+                  const sorted = [...achievements].sort((a, b) => {
+                    // globales primero, luego equipo
+                    if (a.scope !== b.scope) return a.scope === "global" ? -1 : 1;
+                    // dentro de cada scope: tournament -> knockout -> group
+                    return STAGE_ORDER[a.stage_group] - STAGE_ORDER[b.stage_group];
+                  });
+                  return (
+                    <div className="mt-4">
+                      <div className="text-[11px] uppercase tracking-wide text-foreground/85 font-semibold mb-2 flex items-center gap-1.5 drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]">
+                        <Award className="h-3.5 w-3.5 text-primary" fill="currentColor" />
+                        <span>Logros</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {sorted.map((a, i) => (
+                          <AchievementChip
+                            key={`${a.scope}-${a.stage_group}-${a.team_id ?? "g"}-${i}`}
+                            scope={a.scope}
+                            stageGroup={a.stage_group}
+                            position={a.position}
+                            teamName={a.scope === "team" ? myTeamName : null}
+                          />
+                        ))}
+                      </div>
                     </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {sorted.map((a, i) => (
-                        <AchievementChip
-                          key={`${a.scope}-${a.stage_group}-${a.team_id ?? "g"}-${i}`}
-                          scope={a.scope}
-                          stageGroup={a.stage_group}
-                          position={a.position}
-                          teamName={a.scope === "team" ? myTeamName : null}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                );
-              })()}
+                  );
+                })()}
             </div>
 
             {user && myPosition && (
@@ -531,108 +617,108 @@ const Index = () => {
 
         <CountdownTicker>
           {(now) => (
-        <Card className="shadow-card">
-          <CardHeader className="pb-3">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary">
-                  <CalendarClock className="h-5 w-5 text-primary" />
+            <Card className="shadow-card">
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary">
+                      <CalendarClock className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <CardTitle className="text-base">Próximos partidos</CardTitle>
+                      <CardDescription>Lo que viene en breve.</CardDescription>
+                    </div>
+                  </div>
+                  {(() => {
+                    const pendientes = upcoming.filter(
+                      (m) => !predsByMatch[m.id] && now < new Date(m.match_date).getTime() - LOCK_MS,
+                    );
+                    if (pendientes.length === 0) return null;
+                    return (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleAutoPredict}
+                        disabled={autoPredicting}
+                        className="shrink-0 mt-1"
+                      >
+                        <Sparkles className="h-4 w-4" />
+                        <span className="hidden sm:inline">Predecir Automáticamente</span>
+                        <span className="sm:hidden">Auto</span>
+                      </Button>
+                    );
+                  })()}
                 </div>
-                <div className="min-w-0">
-                  <CardTitle className="text-base">Próximos partidos</CardTitle>
-                  <CardDescription>Lo que viene en breve.</CardDescription>
-                </div>
-              </div>
-              {(() => {
-                const pendientes = upcoming.filter(
-                  (m) => !predsByMatch[m.id] && now < new Date(m.match_date).getTime() - LOCK_MS,
-                );
-                if (pendientes.length === 0) return null;
-                return (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleAutoPredict}
-                    disabled={autoPredicting}
-                    className="shrink-0 mt-1"
-                  >
-                    <Sparkles className="h-4 w-4" />
-                    <span className="hidden sm:inline">Predecir Automáticamente</span>
-                    <span className="sm:hidden">Auto</span>
-                  </Button>
-                );
-              })()}
-            </div>
-          </CardHeader>
-          <CardContent>
-            {upcoming.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No hay próximos partidos.</p>
-            ) : (
-              <ul className="divide-y divide-border rounded-lg border bg-card">
-                {upcoming.map((m) => {
-                  const pred = predsByMatch[m.id];
-                  const deadline = new Date(m.match_date).getTime() - LOCK_MS;
-                  const remaining = deadline - now;
-                  const cd = formatCountdown(remaining);
-                  const isClosed = remaining <= 0;
-                  return (
-                    <li key={m.id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 px-3 py-2 text-sm">
-                      <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <span className="hidden sm:inline w-28 shrink-0 text-xs text-muted-foreground">
-                          {formatShortDate(m.match_date)}
-                        </span>
-                        <span className="flex-1 min-w-0 flex items-center gap-2">
-                          <span className="truncate inline-flex items-center gap-1.5 min-w-0">
-                            <TeamName name={m.home_team} />
-                            <span className="text-muted-foreground">vs</span>
-                            <TeamName name={m.away_team} />
-                          </span>
-                          <MultiplierBadge stage={m.stage} />
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between gap-2 sm:justify-end sm:gap-3 sm:shrink-0">
-                        <span className="sm:hidden text-xs text-muted-foreground">
-                          {formatShortDate(m.match_date)}
-                        </span>
-                        {pred ? (
-                          <span className="text-xs text-muted-foreground hidden sm:inline">
-                            Tu predicción:{" "}
-                            <span className="font-semibold text-foreground">
-                              {pred.predicted_home_score} - {pred.predicted_away_score}
+              </CardHeader>
+              <CardContent>
+                {upcoming.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No hay próximos partidos.</p>
+                ) : (
+                  <ul className="divide-y divide-border rounded-lg border bg-card">
+                    {upcoming.map((m) => {
+                      const pred = predsByMatch[m.id];
+                      const deadline = new Date(m.match_date).getTime() - LOCK_MS;
+                      const remaining = deadline - now;
+                      const cd = formatCountdown(remaining);
+                      const isClosed = remaining <= 0;
+                      return (
+                        <li
+                          key={m.id}
+                          className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 px-3 py-2 text-sm"
+                        >
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <span className="hidden sm:inline w-28 shrink-0 text-xs text-muted-foreground">
+                              {formatShortDate(m.match_date)}
                             </span>
-                          </span>
-                        ) : (
-                          <span
-                            className={cn(
-                              "text-xs font-semibold tabular-nums",
-                              toneClass(cd.tone),
+                            <span className="flex-1 min-w-0 flex items-center gap-2">
+                              <span className="truncate inline-flex items-center gap-1.5 min-w-0">
+                                <TeamName name={m.home_team} />
+                                <span className="text-muted-foreground">vs</span>
+                                <TeamName name={m.away_team} />
+                              </span>
+                              <MultiplierBadge stage={m.stage} />
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-2 sm:justify-end sm:gap-3 sm:shrink-0">
+                            <span className="sm:hidden text-xs text-muted-foreground">
+                              {formatShortDate(m.match_date)}
+                            </span>
+                            {pred ? (
+                              <span className="text-xs text-muted-foreground hidden sm:inline">
+                                Tu predicción:{" "}
+                                <span className="font-semibold text-foreground">
+                                  {pred.predicted_home_score} - {pred.predicted_away_score}
+                                </span>
+                              </span>
+                            ) : (
+                              <span
+                                className={cn("text-xs font-semibold tabular-nums", toneClass(cd.tone))}
+                                title="Tiempo restante para predecir"
+                              >
+                                {cd.text}
+                              </span>
                             )}
-                            title="Tiempo restante para predecir"
-                          >
-                            {cd.text}
-                          </span>
-                        )}
-                        {pred ? (
-                          <Button asChild size="sm" variant="ghost" className="shrink-0 h-8 px-2 text-xs">
-                            <Link to={`/prediccion?match=${m.id}`}>Modificar</Link>
-                          </Button>
-                        ) : isClosed ? (
-                          <Button size="sm" disabled className="shrink-0 h-8 px-2 text-xs">
-                            Cerrado
-                          </Button>
-                        ) : (
-                          <Button asChild size="sm" className="shrink-0 h-8 px-2 text-xs">
-                            <Link to={`/prediccion?match=${m.id}`}>Cargar</Link>
-                          </Button>
-                        )}
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
+                            {pred ? (
+                              <Button asChild size="sm" variant="ghost" className="shrink-0 h-8 px-2 text-xs">
+                                <Link to={`/prediccion?match=${m.id}`}>Modificar</Link>
+                              </Button>
+                            ) : isClosed ? (
+                              <Button size="sm" disabled className="shrink-0 h-8 px-2 text-xs">
+                                Cerrado
+                              </Button>
+                            ) : (
+                              <Button asChild size="sm" className="shrink-0 h-8 px-2 text-xs">
+                                <Link to={`/prediccion?match=${m.id}`}>Cargar</Link>
+                              </Button>
+                            )}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
           )}
         </CountdownTicker>
 
@@ -649,8 +735,14 @@ const Index = () => {
                     <CardTitle className="text-base">Ranking</CardTitle>
                     <CardDescription>
                       {rankView === "global"
-                        ? (myPosition ? `Global: #${myPosition} de ${globalTotal} · ${myPoints} pts` : "Aún no tenés posición global.")
-                        : (myTeamPosition ? `Equipo ${myTeamName ?? ""}: #${myTeamPosition} de ${myTeamTotal} · ${myPoints} pts` : (myTeamId ? "Sin posición en equipo." : "Sin equipo asignado."))}
+                        ? myPosition
+                          ? `Global: #${myPosition} de ${globalTotal} · ${myPoints} pts`
+                          : "Aún no tenés posición global."
+                        : myTeamPosition
+                          ? `Equipo ${myTeamName ?? ""}: #${myTeamPosition} de ${myTeamTotal} · ${myPoints} pts`
+                          : myTeamId
+                            ? "Sin posición en equipo."
+                            : "Sin equipo asignado."}
                     </CardDescription>
                   </div>
                 </div>
@@ -661,7 +753,7 @@ const Index = () => {
                       onClick={() => setRankView("global")}
                       className={cn(
                         "transition-opacity text-primary",
-                        rankView === "global" ? "opacity-100" : "opacity-40 hover:opacity-70"
+                        rankView === "global" ? "opacity-100" : "opacity-40 hover:opacity-70",
                       )}
                       title="Ranking global"
                       aria-label="Ranking global"
@@ -678,7 +770,7 @@ const Index = () => {
                       onClick={() => setRankView("team")}
                       className={cn(
                         "transition-opacity text-primary",
-                        rankView === "team" ? "opacity-100" : "opacity-40 hover:opacity-70"
+                        rankView === "team" ? "opacity-100" : "opacity-40 hover:opacity-70",
                       )}
                       title={`Ranking de equipo${myTeamName ? `: ${myTeamName}` : ""}`}
                       aria-label="Ranking de equipo"
@@ -703,9 +795,7 @@ const Index = () => {
                             isMe ? "bg-primary/10 border-l-2 border-l-primary font-semibold" : ""
                           }`}
                         >
-                          <span className="w-7 shrink-0 text-xs text-muted-foreground tabular-nums">
-                            #{r.position}
-                          </span>
+                          <span className="w-7 shrink-0 text-xs text-muted-foreground tabular-nums">#{r.position}</span>
                           <UserAvatar seed={r.avatar_seed} name={name} className="h-7 w-7 shrink-0" />
                           <span className="flex-1 min-w-0">
                             <span className="block truncate">{name}</span>
@@ -726,39 +816,33 @@ const Index = () => {
                     })}
                   </ul>
                 )
+              ) : teamRankingWindow.length > 0 ? (
+                <ul className="divide-y divide-border rounded-lg border bg-card">
+                  {teamRankingWindow.map((r) => {
+                    const isMe = r.user_id === user?.id;
+                    const name = displayName(r);
+                    return (
+                      <li
+                        key={r.user_id}
+                        className={`flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-2 text-sm ${
+                          isMe ? "bg-primary/10 border-l-2 border-l-primary font-semibold" : ""
+                        }`}
+                      >
+                        <span className="w-7 shrink-0 text-xs text-muted-foreground tabular-nums">#{r.position}</span>
+                        <UserAvatar seed={r.avatar_seed} name={name} className="h-7 w-7 shrink-0" />
+                        <span className="flex-1 min-w-0 truncate">{name}</span>
+                        <span className="shrink-0 ml-auto text-xs tabular-nums flex items-center gap-2 basis-auto">
+                          <span className={isMe ? "text-primary" : "text-muted-foreground"}>{r.total_points} pts</span>
+                          <TrendBadge current={r.team_current_rank} previous={r.team_previous_rank} />
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
               ) : (
-                teamRankingWindow.length > 0 ? (
-                  <ul className="divide-y divide-border rounded-lg border bg-card">
-                    {teamRankingWindow.map((r) => {
-                      const isMe = r.user_id === user?.id;
-                      const name = displayName(r);
-                      return (
-                        <li
-                          key={r.user_id}
-                          className={`flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-2 text-sm ${
-                            isMe ? "bg-primary/10 border-l-2 border-l-primary font-semibold" : ""
-                          }`}
-                        >
-                          <span className="w-7 shrink-0 text-xs text-muted-foreground tabular-nums">
-                            #{r.position}
-                          </span>
-                          <UserAvatar seed={r.avatar_seed} name={name} className="h-7 w-7 shrink-0" />
-                          <span className="flex-1 min-w-0 truncate">{name}</span>
-                          <span className="shrink-0 ml-auto text-xs tabular-nums flex items-center gap-2 basis-auto">
-                            <span className={isMe ? "text-primary" : "text-muted-foreground"}>
-                              {r.total_points} pts
-                            </span>
-                            <TrendBadge current={r.team_current_rank} previous={r.team_previous_rank} />
-                          </span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-muted-foreground py-2">
-                    {myTeamId ? "Sin posición en equipo." : "Sin equipo asignado."}
-                  </p>
-                )
+                <p className="text-sm text-muted-foreground py-2">
+                  {myTeamId ? "Sin posición en equipo." : "Sin equipo asignado."}
+                </p>
               )}
               <Button asChild size="sm" variant="outline" className="w-full sm:w-auto">
                 <Link to="/ranking">Ver ranking</Link>
@@ -776,9 +860,7 @@ const Index = () => {
                 <div className="min-w-0">
                   <CardTitle className="text-base">Inter Áreas</CardTitle>
                   <CardDescription>
-                    {myTeamId
-                      ? "Tu área entre las más cercanas."
-                      : "Top de áreas por promedio de puntos."}
+                    {myTeamId ? "Tu área entre las más cercanas." : "Top de áreas por promedio de puntos."}
                   </CardDescription>
                 </div>
               </div>
@@ -788,7 +870,11 @@ const Index = () => {
                 <ul className="divide-y divide-border rounded-lg border bg-card">
                   {interAreasWindow.map((r) => {
                     const isMine = !!myTeamId && r.team_id === myTeamId;
-                    const cleanName = r.name.replace(/^Equipo\s+/i, "").replace(/\s+prom\.?$/i, "").trim() || r.name;
+                    const cleanName =
+                      r.name
+                        .replace(/^Equipo\s+/i, "")
+                        .replace(/\s+prom\.?$/i, "")
+                        .trim() || r.name;
                     return (
                       <li
                         key={r.team_avatar_id}
@@ -796,9 +882,7 @@ const Index = () => {
                           isMine ? "bg-primary/10 border-l-2 border-l-primary font-semibold" : ""
                         }`}
                       >
-                        <span className="w-7 shrink-0 text-xs text-muted-foreground tabular-nums">
-                          #{r.position}
-                        </span>
+                        <span className="w-7 shrink-0 text-xs text-muted-foreground tabular-nums">#{r.position}</span>
                         <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/15 text-primary shrink-0">
                           <Building2 className="h-4 w-4" />
                         </div>
@@ -867,9 +951,7 @@ const Index = () => {
                             <span className="font-semibold text-foreground">
                               {pred.predicted_home_score} - {pred.predicted_away_score}
                             </span>{" "}
-                            <span className="font-semibold text-primary">
-                              +{pred.points_awarded ?? 0} pts
-                            </span>
+                            <span className="font-semibold text-primary">+{pred.points_awarded ?? 0} pts</span>
                           </>
                         )}
                       </span>

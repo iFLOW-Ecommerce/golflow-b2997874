@@ -33,10 +33,7 @@ const Auth = () => {
   const generateBase = () =>
     typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
   const [avatarBase, setAvatarBase] = useState(generateBase);
-  const avatarSeeds = useMemo(
-    () => Array.from({ length: 8 }, (_, i) => `${avatarBase}-${i + 1}`),
-    [avatarBase],
-  );
+  const avatarSeeds = useMemo(() => Array.from({ length: 8 }, (_, i) => `${avatarBase}-${i + 1}`), [avatarBase]);
   const [selectedSeed, setSelectedSeed] = useState<string>(avatarSeeds[0]);
 
   useEffect(() => {
@@ -76,9 +73,7 @@ const Auth = () => {
     if (error) {
       toast({
         title: "No pudimos iniciar sesión",
-        description: error.message === "Invalid login credentials"
-          ? "Email o contraseña incorrectos."
-          : error.message,
+        description: error.message === "Invalid login credentials" ? "Email o contraseña incorrectos." : error.message,
         variant: "destructive",
       });
     }
@@ -130,12 +125,8 @@ const Auth = () => {
           <div className="inline-flex h-20 w-20 items-center justify-center rounded-2xl shadow-elegant bg-card border border-border overflow-hidden">
             <img src={logo} alt="Prode Mundial 2026" className="h-20 w-20 object-contain" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Prode Mundial 2026
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Predecí los resultados y competí con tus amigos
-          </p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Prode iFLOW Mundial 2026</h1>
+          <p className="text-sm text-muted-foreground">Predecí los resultados y competí con tus amigos</p>
         </header>
 
         <Card className="shadow-elegant border-border/60">
@@ -154,13 +145,27 @@ const Auth = () => {
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="signin-email">Email</Label>
-                    <Input id="signin-email" type="email" required autoComplete="email"
-                      value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@email.com" />
+                    <Input
+                      id="signin-email"
+                      type="email"
+                      required
+                      autoComplete="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="tu@email.com"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signin-password">Contraseña</Label>
-                    <Input id="signin-password" type="password" required autoComplete="current-password"
-                      value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
+                    <Input
+                      id="signin-password"
+                      type="password"
+                      required
+                      autoComplete="current-password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                    />
                   </div>
                   <Button type="submit" variant="hero" className="w-full" disabled={submitting}>
                     {submitting ? "Ingresando..." : "Ingresar"}
@@ -176,13 +181,27 @@ const Auth = () => {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
                       <Label htmlFor="signup-first">Nombre</Label>
-                      <Input id="signup-first" type="text" required autoComplete="given-name"
-                        value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Juan" />
+                      <Input
+                        id="signup-first"
+                        type="text"
+                        required
+                        autoComplete="given-name"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        placeholder="Juan"
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="signup-last">Apellido</Label>
-                      <Input id="signup-last" type="text" required autoComplete="family-name"
-                        value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Pérez" />
+                      <Input
+                        id="signup-last"
+                        type="text"
+                        required
+                        autoComplete="family-name"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        placeholder="Pérez"
+                      />
                     </div>
                   </div>
 
@@ -194,7 +213,9 @@ const Auth = () => {
                       </SelectTrigger>
                       <SelectContent>
                         {teams.map((t) => (
-                          <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                          <SelectItem key={t.id} value={t.id}>
+                            {t.name}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -244,13 +265,28 @@ const Auth = () => {
 
                   <div className="space-y-2">
                     <Label htmlFor="signup-email">Email</Label>
-                    <Input id="signup-email" type="email" required autoComplete="email"
-                      value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@email.com" />
+                    <Input
+                      id="signup-email"
+                      type="email"
+                      required
+                      autoComplete="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="tu@email.com"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-password">Contraseña</Label>
-                    <Input id="signup-password" type="password" required autoComplete="new-password" minLength={6}
-                      value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mínimo 6 caracteres" />
+                    <Input
+                      id="signup-password"
+                      type="password"
+                      required
+                      autoComplete="new-password"
+                      minLength={6}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Mínimo 6 caracteres"
+                    />
                   </div>
                   <Button type="submit" variant="hero" className="w-full" disabled={submitting}>
                     {submitting ? "Creando cuenta..." : "Crear cuenta"}
