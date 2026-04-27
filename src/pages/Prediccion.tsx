@@ -441,8 +441,11 @@ const Prediccion = () => {
         >
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center gap-3 mb-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-elegant">
-                <Target className="h-5 w-5" />
+              <div
+                className="flex h-10 w-10 items-center justify-center rounded-xl bg-background/40 backdrop-blur border border-primary/60 text-primary"
+                style={{ boxShadow: "0 0 12px hsl(var(--primary) / 0.55), inset 0 0 8px hsl(var(--primary) / 0.25)" }}
+              >
+                <Target className="h-5 w-5" style={{ filter: "drop-shadow(0 0 6px hsl(var(--primary) / 0.9))" }} />
               </div>
               <span className="inline-flex items-center rounded-full bg-background/50 backdrop-blur px-2.5 py-0.5 text-xs font-semibold text-primary border border-primary/30">
                 Mundial 2026
