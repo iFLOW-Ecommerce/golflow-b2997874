@@ -140,10 +140,18 @@ export const RulesDialog = ({
                   Desde octavos de final, los puntos se multiplican. ¡Cuanto más cerca de la final, más valen!
                 </p>
                 <div className="flex flex-wrap gap-1.5 text-[11px] font-bold">
-                  <span className="rounded-full bg-primary/10 text-primary px-2 py-0.5">Octavos ⚡×2</span>
-                  <span className="rounded-full bg-primary/10 text-primary px-2 py-0.5">Cuartos ⚡×3</span>
-                  <span className="rounded-full bg-primary/10 text-primary px-2 py-0.5">Semis ⚡×4</span>
-                  <span className="rounded-full bg-primary/10 text-primary px-2 py-0.5">Final ⚡×5</span>
+                  <span className="inline-flex items-center gap-0.5 rounded-full bg-primary/10 text-primary px-2 py-0.5">
+                    Octavos <Zap className="h-3 w-3" fill="currentColor" />×2
+                  </span>
+                  <span className="inline-flex items-center gap-0.5 rounded-full bg-primary/10 text-primary px-2 py-0.5">
+                    Cuartos <Zap className="h-3 w-3" fill="currentColor" />×3
+                  </span>
+                  <span className="inline-flex items-center gap-0.5 rounded-full bg-primary/10 text-primary px-2 py-0.5">
+                    Semis <Zap className="h-3 w-3" fill="currentColor" />×4
+                  </span>
+                  <span className="inline-flex items-center gap-0.5 rounded-full bg-primary/10 text-primary px-2 py-0.5">
+                    Final <Zap className="h-3 w-3" fill="currentColor" />×5
+                  </span>
                 </div>
               </div>
             </CardContent>
