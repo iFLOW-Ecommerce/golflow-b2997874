@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { BarChart3, Building2 } from "lucide-react";
+import { BarChart3, Building2, Globe, Star, Medal, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TrendBadge } from "@/lib/trend-badge";
 import { UserAvatar } from "@/lib/user-avatar";
@@ -164,9 +164,12 @@ const Ranking = () => {
   const displayName = (row: RankingRow) => fmtName(row);
 
   const positionCell = (pos: number) => {
-    if (pos === 1) return <span className="text-xl" aria-label="Primero">🥇</span>;
-    if (pos === 2) return <span className="text-xl" aria-label="Segundo">🥈</span>;
-    if (pos === 3) return <span className="text-xl" aria-label="Tercero">🥉</span>;
+    if (pos === 1)
+      return <Trophy className="h-5 w-5 text-yellow-300" fill="currentColor" aria-label="Primero" />;
+    if (pos === 2)
+      return <Medal className="h-5 w-5 text-slate-300" fill="currentColor" aria-label="Segundo" />;
+    if (pos === 3)
+      return <Medal className="h-5 w-5 text-amber-600" fill="currentColor" aria-label="Tercero" />;
     return <span className="font-semibold">#{pos}</span>;
   };
 
@@ -223,7 +226,7 @@ const Ranking = () => {
               {/* Global */}
               <div className="p-5 bg-gradient-to-br from-background to-secondary/30">
                 <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground font-medium">
-                  <span>🌐</span>
+                  <Globe className="h-3.5 w-3.5 text-primary" />
                   <span>Global</span>
                 </div>
                 {myGlobalPosition ? (
@@ -247,7 +250,7 @@ const Ranking = () => {
               {/* Team */}
               <div className="p-5 bg-gradient-to-br from-primary/5 to-primary/10">
                 <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-primary font-medium">
-                  <span>⭐</span>
+                  <Star className="h-3.5 w-3.5" fill="currentColor" />
                   <span className="truncate">Equipo · {myRow.team_name ?? "Sin equipo"}</span>
                 </div>
                 {myRow.team_id && myTeamPosition ? (
@@ -289,12 +292,27 @@ const Ranking = () => {
                     <SelectValue placeholder="Elegí un ranking" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={GLOBAL}>🌐 Global</SelectItem>
-                    <SelectItem value={INTER_AREAS}>🏢 Inter Áreas</SelectItem>
+                    <SelectItem value={GLOBAL}>
+                      <span className="inline-flex items-center gap-2">
+                        <Globe className="h-3.5 w-3.5 text-primary" />
+                        Global
+                      </span>
+                    </SelectItem>
+                    <SelectItem value={INTER_AREAS}>
+                      <span className="inline-flex items-center gap-2">
+                        <Building2 className="h-3.5 w-3.5 text-primary" />
+                        Inter Áreas
+                      </span>
+                    </SelectItem>
                     {myTeam && (
                       <SelectGroup>
                         <SelectLabel>Mi equipo</SelectLabel>
-                        <SelectItem value={myTeam.id}>⭐ {myTeam.name}</SelectItem>
+                        <SelectItem value={myTeam.id}>
+                          <span className="inline-flex items-center gap-2">
+                            <Star className="h-3.5 w-3.5 text-primary" fill="currentColor" />
+                            {myTeam.name}
+                          </span>
+                        </SelectItem>
                       </SelectGroup>
                     )}
                     {otherTeams.length > 0 && (

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Trophy, BarChart3, CalendarClock, Sparkles, Building2, HelpCircle } from "lucide-react";
+import { Trophy, BarChart3, CalendarClock, Sparkles, Building2, HelpCircle, Globe, Star, Award, CheckCircle2, Target, Crosshair, Moon, Sprout, Smile, Rocket, Flame, Crown, type LucideIcon } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { RulesDialog } from "@/components/RulesDialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -93,19 +93,13 @@ const formatShortDate = (iso: string) => {
   }
 };
 
-const streakEmoji = (n: number) => {
-  if (n <= 0) return "😴";
-  if (n === 1) return "🌱";
-  if (n === 2) return "😁";
-  if (n === 3) return "😎";
-  if (n === 4) return "🚀";
-  if (n === 5) return "✨";
-  if (n === 6) return "🔥";
-  if (n === 7) return "🔥🔥";
-  if (n === 8) return "🔥🔥🔥";
-  if (n === 9) return "👑";
-  if (n === 10) return "👑👑";
-  return "👑👑👑";
+const streakIcon = (n: number): LucideIcon => {
+  if (n <= 0) return Moon;
+  if (n === 1) return Sprout;
+  if (n <= 3) return Smile;
+  if (n <= 5) return Rocket;
+  if (n <= 8) return Flame;
+  return Crown;
 };
 
 const Index = () => {
@@ -188,7 +182,7 @@ const Index = () => {
       return next;
     });
     toast({
-      title: "🪔 Predicciones automáticas",
+      title: "Predicciones automáticas",
       description: `Se completaron ${pendientes.length} ${pendientes.length === 1 ? "predicción" : "predicciones"}.`,
     });
   };
@@ -438,10 +432,14 @@ const Index = () => {
                 return (
                   <p className="mt-2 inline-flex flex-wrap items-center gap-1.5 rounded-lg bg-background/55 backdrop-blur-sm px-3 py-1.5 text-sm text-white border border-white/10">
                     {missing === 0 ? (
-                      <span>🏖️ Estás al día con tus predicciones</span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <CheckCircle2 className="h-4 w-4 text-primary" fill="currentColor" />
+                        Estás al día con tus predicciones
+                      </span>
                     ) : (
                       <>
-                        <span>🎯 Te faltan</span>
+                        <Target className="h-4 w-4 text-primary" fill="currentColor" />
+                        <span>Te faltan</span>
                         <span className="font-bold bg-primary/25 px-1.5 py-0.5 rounded-md text-primary border border-primary/40">
                           {missing} {missing === 1 ? "predicción" : "predicciones"}
                         </span>
@@ -454,15 +452,20 @@ const Index = () => {
               {user && (accuracy !== null || streak >= 0) && (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {accuracy !== null && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 backdrop-blur px-2.5 py-1 text-xs font-medium text-primary border border-primary/30">
-                      🔍 Precisión {accuracy}%
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 backdrop-blur px-2.5 py-1 text-xs font-medium text-primary border border-primary/30">
+                      <Crosshair className="h-3.5 w-3.5" />
+                      Precisión {accuracy}%
                     </span>
                   )}
-                  {accuracy !== null && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 backdrop-blur px-2.5 py-1 text-xs font-medium text-primary border border-primary/30">
-                      Racha: {streak} {streakEmoji(streak)}
-                    </span>
-                  )}
+                  {accuracy !== null && (() => {
+                    const StreakIcon = streakIcon(streak);
+                    return (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 backdrop-blur px-2.5 py-1 text-xs font-medium text-primary border border-primary/30">
+                        <StreakIcon className="h-3.5 w-3.5" fill="currentColor" />
+                        Racha: {streak}
+                      </span>
+                    );
+                  })()}
                 </div>
               )}
 
@@ -476,7 +479,7 @@ const Index = () => {
                 return (
                   <div className="mt-4">
                     <div className="text-[11px] uppercase tracking-wide text-foreground/85 font-semibold mb-2 flex items-center gap-1.5 drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]">
-                      <span>🎖️</span>
+                      <Award className="h-3.5 w-3.5 text-primary" fill="currentColor" />
                       <span>Logros</span>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
@@ -500,7 +503,7 @@ const Index = () => {
                 {/* Global */}
                 <div className="rounded-xl bg-card/80 backdrop-blur p-3 border border-border shadow-card">
                   <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
-                    <span>🌐</span>
+                    <Globe className="h-3 w-3 text-primary" />
                     <span>Global</span>
                   </div>
                   <div className="mt-1.5 flex items-baseline gap-1.5">
@@ -516,7 +519,7 @@ const Index = () => {
                 {/* Team */}
                 <div className="rounded-xl bg-card/80 backdrop-blur p-3 border border-primary/30 shadow-card">
                   <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-primary font-medium">
-                    <span>⭐</span>
+                    <Star className="h-3 w-3" fill="currentColor" />
                     <span className="truncate">{myTeamName ?? "Sin equipo"}</span>
                   </div>
                   {myTeamId && myTeamPosition ? (
@@ -567,7 +570,7 @@ const Index = () => {
                   >
                     <Sparkles className="h-4 w-4" />
                     <span className="hidden sm:inline">Predecir Automáticamente</span>
-                    <span className="sm:hidden">🪔 Auto</span>
+                    <span className="sm:hidden">Auto</span>
                   </Button>
                 );
               })()}
@@ -667,13 +670,13 @@ const Index = () => {
                       type="button"
                       onClick={() => setRankView("global")}
                       className={cn(
-                        "text-base transition-opacity",
+                        "transition-opacity text-primary",
                         rankView === "global" ? "opacity-100" : "opacity-40 hover:opacity-70"
                       )}
                       title="Ranking global"
                       aria-label="Ranking global"
                     >
-                      🌐
+                      <Globe className="h-4 w-4" />
                     </button>
                     <Switch
                       checked={rankView === "team"}
@@ -684,13 +687,13 @@ const Index = () => {
                       type="button"
                       onClick={() => setRankView("team")}
                       className={cn(
-                        "text-base transition-opacity",
+                        "transition-opacity text-primary",
                         rankView === "team" ? "opacity-100" : "opacity-40 hover:opacity-70"
                       )}
                       title={`Ranking de equipo${myTeamName ? `: ${myTeamName}` : ""}`}
                       aria-label="Ranking de equipo"
                     >
-                      ⭐
+                      <Star className="h-4 w-4" fill="currentColor" />
                     </button>
                   </div>
                 )}

@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Save, ShieldAlert } from "lucide-react";
+import { Loader2, Save, ShieldAlert, Check } from "lucide-react";
 import { MultiplierBadge } from "@/lib/multiplier";
 import { TeamName } from "@/lib/country-flag";
 
@@ -282,7 +282,11 @@ const Admin = () => {
               {formatDate(m.match_date)}
             </span>
           )}
-          {m.is_finished && <Badge variant="secondary" className="text-xs">✓</Badge>}
+          {m.is_finished && (
+            <Badge variant="secondary" className="text-xs gap-1 text-primary">
+              <Check className="h-3 w-3" strokeWidth={3} />
+            </Badge>
+          )}
         </div>
         <div className="flex-1 grid grid-cols-[1fr_auto_1fr] items-center gap-2 min-w-0">
           <span className="text-sm font-medium text-right truncate">

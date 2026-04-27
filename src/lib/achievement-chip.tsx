@@ -1,3 +1,5 @@
+import { Trophy, Star } from "lucide-react";
+
 type StageGroup = "group" | "knockout" | "tournament";
 
 const STAGE_LABEL: Record<StageGroup, string> = {
@@ -32,7 +34,7 @@ export const AchievementChip = ({
         style={{ textShadow: "0 0 8px hsl(150 100% 60% / 0.4)" }}
         title={label}
       >
-        <span>🏆</span>
+        <Trophy className="h-3 w-3" fill="currentColor" />
         <span>{label}</span>
       </span>
     );
@@ -44,7 +46,7 @@ export const AchievementChip = ({
       style={{ textShadow: "0 0 8px hsl(50 100% 60% / 0.4)" }}
       title={label}
     >
-      <span>⭐</span>
+      <Star className="h-3 w-3" fill="currentColor" />
       <span>{label}</span>
     </span>
   );
