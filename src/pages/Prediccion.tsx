@@ -337,9 +337,9 @@ const Prediccion = () => {
             </span>
           )}
         </div>
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          <div className="flex flex-1 items-center justify-between sm:justify-center gap-3 min-w-0">
-            <span className="text-sm sm:text-base font-medium truncate text-right flex-1 sm:flex-initial sm:w-40">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 min-w-0">
+          <div className="flex flex-1 items-center justify-between sm:justify-center gap-2 sm:gap-3 min-w-0">
+            <span className="text-sm sm:text-base font-medium truncate text-right flex-1 sm:flex-initial sm:w-32 min-w-0">
               <TeamName name={m.home_team} flagSize={16} className="justify-end" />
             </span>
             <div className="flex items-center gap-1 shrink-0">
@@ -365,11 +365,11 @@ const Prediccion = () => {
                 className="w-12 h-10 text-center px-1 disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-100"
               />
             </div>
-            <span className="text-sm sm:text-base font-medium truncate flex-1 sm:flex-initial sm:w-40">
+            <span className="text-sm sm:text-base font-medium truncate flex-1 sm:flex-initial sm:w-32 min-w-0">
               <TeamName name={m.away_team} flagSize={16} />
             </span>
           </div>
-          <div className="flex items-center justify-end sm:w-28 text-xs text-muted-foreground min-h-[1.25rem]" aria-live="polite">
+          <div className="flex items-center justify-end sm:min-w-[7rem] text-xs text-muted-foreground min-h-[1.25rem] shrink-0" aria-live="polite">
             {status === "saving" ? (
               <span className="flex items-center gap-1">
                 <Loader2 className="h-3 w-3 animate-spin" />

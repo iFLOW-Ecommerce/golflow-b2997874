@@ -339,7 +339,7 @@ const Ranking = () => {
                       return (
                         <TableRow key={row.team_avatar_id} className={rowClassFor(pos, isMine)}>
                           <TableCell>{positionCell(pos)}</TableCell>
-                          <TableCell className="truncate max-w-[240px] sm:max-w-none">
+                          <TableCell className="truncate max-w-[180px] sm:max-w-none">
                             <div className="flex items-center gap-2 min-w-0">
                               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/15 text-primary shrink-0">
                                 <Building2 className="h-4 w-4" />
@@ -381,7 +381,7 @@ const Ranking = () => {
                     return (
                       <TableRow key={row.user_id} className={rowClassFor(pos, isMe)}>
                         <TableCell>{positionCell(pos)}</TableCell>
-                        <TableCell className="truncate max-w-[200px] sm:max-w-none">
+                        <TableCell className="truncate max-w-[140px] sm:max-w-none">
                           <div className="flex items-center gap-2 min-w-0">
                             <UserAvatar seed={row.avatar_seed} name={name} className="h-7 w-7 shrink-0" />
                             <span className={cn("truncate", isMe && "font-semibold")}>{name}</span>

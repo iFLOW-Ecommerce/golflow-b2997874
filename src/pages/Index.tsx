@@ -419,7 +419,7 @@ const Index = () => {
             <HelpCircle className="h-3.5 w-3.5" />
             Reglas
           </button>
-          <div className="max-w-4xl mx-auto grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
+          <div className="max-w-4xl mx-auto grid gap-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
             <div className="min-w-0">
               <div className="flex items-center gap-3 mb-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-elegant">
@@ -585,49 +585,56 @@ const Index = () => {
                   const cd = formatCountdown(remaining);
                   const isClosed = remaining <= 0;
                   return (
-                    <li key={m.id} className="flex items-center gap-3 px-3 py-2 text-sm">
-                      <span className="w-28 shrink-0 text-xs text-muted-foreground">
-                        {formatShortDate(m.match_date)}
-                      </span>
-                      <span className="flex-1 min-w-0 truncate flex items-center gap-2">
-                        <span className="truncate inline-flex items-center gap-1.5">
-                          <TeamName name={m.home_team} />
-                          <span className="text-muted-foreground">vs</span>
-                          <TeamName name={m.away_team} />
+                    <li key={m.id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 px-3 py-2 text-sm">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <span className="hidden sm:inline w-28 shrink-0 text-xs text-muted-foreground">
+                          {formatShortDate(m.match_date)}
                         </span>
-                        <MultiplierBadge stage={m.stage} />
-                      </span>
-                      {pred ? (
-                        <span className="shrink-0 text-xs text-muted-foreground hidden sm:inline">
-                          Tu predicción:{" "}
-                          <span className="font-semibold text-foreground">
-                            {pred.predicted_home_score} - {pred.predicted_away_score}
+                        <span className="flex-1 min-w-0 flex items-center gap-2">
+                          <span className="truncate inline-flex items-center gap-1.5 min-w-0">
+                            <TeamName name={m.home_team} />
+                            <span className="text-muted-foreground">vs</span>
+                            <TeamName name={m.away_team} />
                           </span>
+                          <MultiplierBadge stage={m.stage} />
                         </span>
-                      ) : (
-                        <span
-                          className={cn(
-                            "shrink-0 text-xs font-semibold tabular-nums",
-                            toneClass(cd.tone),
-                          )}
-                          title="Tiempo restante para predecir"
-                        >
-                          {cd.text}
+                      </div>
+                      <div className="flex items-center justify-between gap-2 sm:justify-end sm:gap-3 sm:shrink-0">
+                        <span className="sm:hidden text-xs text-muted-foreground">
+                          {formatShortDate(m.match_date)}
                         </span>
-                      )}
-                      {pred ? (
-                        <Button asChild size="sm" variant="ghost" className="shrink-0 h-8 px-2 text-xs">
-                          <Link to={`/prediccion?match=${m.id}`}>Modificar</Link>
-                        </Button>
-                      ) : isClosed ? (
-                        <Button size="sm" disabled className="shrink-0 h-8 px-2 text-xs">
-                          Cerrado
-                        </Button>
-                      ) : (
-                        <Button asChild size="sm" className="shrink-0 h-8 px-2 text-xs">
-                          <Link to={`/prediccion?match=${m.id}`}>Cargar resultados</Link>
-                        </Button>
-                      )}
+                        {pred ? (
+                          <span className="text-xs text-muted-foreground hidden sm:inline">
+                            Tu predicción:{" "}
+                            <span className="font-semibold text-foreground">
+                              {pred.predicted_home_score} - {pred.predicted_away_score}
+                            </span>
+                          </span>
+                        ) : (
+                          <span
+                            className={cn(
+                              "text-xs font-semibold tabular-nums",
+                              toneClass(cd.tone),
+                            )}
+                            title="Tiempo restante para predecir"
+                          >
+                            {cd.text}
+                          </span>
+                        )}
+                        {pred ? (
+                          <Button asChild size="sm" variant="ghost" className="shrink-0 h-8 px-2 text-xs">
+                            <Link to={`/prediccion?match=${m.id}`}>Modificar</Link>
+                          </Button>
+                        ) : isClosed ? (
+                          <Button size="sm" disabled className="shrink-0 h-8 px-2 text-xs">
+                            Cerrado
+                          </Button>
+                        ) : (
+                          <Button asChild size="sm" className="shrink-0 h-8 px-2 text-xs">
+                            <Link to={`/prediccion?match=${m.id}`}>Cargar</Link>
+                          </Button>
+                        )}
+                      </div>
                     </li>
                   );
                 })}

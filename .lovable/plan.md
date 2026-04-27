@@ -1,112 +1,78 @@
-## Cambios en `/Inicio` — sección Ranking
+## Diagnóstico
 
-### 1. Layout: dividir la card actual en dos, lado a lado
+Detecté **6 causas** que generan scroll lateral, cards de anchos distintos y sectores vacíos en mobile:
 
-Reemplazar la única `<Card>` "Ranking" (líneas 538–583) por un contenedor `grid md:grid-cols-2 gap-4` con **dos cards horizontales**:
-- **Card A** — Ranking individual con switch Global/Equipo
-- **Card B** — Ranking Inter-Áreas (ventana del área del usuario)
+### 1. `src/App.css` — residuo del template Vite (causa raíz crítica)
+`#root` tiene `max-width: 1280px`, `padding: 2rem` (32px en cada lado, fuera del control de Tailwind) y `text-align: center`. Esto:
+- Suma padding extra que empuja el contenido fuera del viewport en mobile (overflow horizontal global).
+- Limita el ancho del hero en pantallas grandes (problema reportado anteriormente).
+- Centra texto donde no debería.
 
-En mobile se apilan; en desktop quedan en dos columnas.
+### 2. `/inicio` — Lista "Próximos partidos" no quepa en mobile
+Cada `<li>` tiene fecha (w-28 = 112px) + equipos + countdown + botón "Cargar resultados" todos con `shrink-0`. Suma >360px → scroll horizontal dentro de la card.
 
----
+### 3. `/inicio` — Stats del hero con ancho fijo
+`md:w-[200px]` sobre el bloque de ranking + items de la lista de ranking (pts inline + TrendBadge) desbordan en pantallas <380px.
 
-### 2. Card A: Ranking individual con switch Global ↔ Equipo
+### 4. `/prediccion` — Filas de partidos con anchos rígidos
+`sm:w-40` (160px) en nombres de equipos × 2 + inputs (~110px) + status (`sm:w-28` = 112px) = ~542px. En tablets de 600-700px se desborda.
 
-- Estado local nuevo: `const [rankView, setRankView] = useState<"global" | "team">("team")` (default a equipo si el usuario tiene equipo, sino "global").
-- En el `CardHeader`, junto al título, agregar un toggle estilo on-off usando el componente `Switch` de `@/components/ui/switch`, flanqueado por:
-  - Izquierda: `🌐 Global` (o ícono `Globe`)
-  - Derecha: `⭐ {nombre del equipo}` (mismos íconos que ya usamos: 🌐 trofeo/global y ⭐ estrella, manteniendo la convención del hero y de `Ranking.tsx`).
-  - El estado `checked` representa "equipo".
-- `CardDescription` dinámico: muestra la posición/puntos según el view actual (reusa `myPosition`/`myPoints` para global, `myTeamPosition`/`myTeamTotal` para equipo).
+### 5. `/ranking` — Tabla sin wrapper de scroll
+La `<Table>` puede desbordar la card en mobile (nombres largos + badges + trend). Falta `overflow-x-auto` defensivo.
 
-**Datos a cargar (extender el `select` del query `user_ranking`)**:
-- Ya trae `team_id`, `team_name`, `team_current_rank`, `team_previous_rank`. Suficiente.
-- Construir un nuevo estado `teamRankingWindow` análogo a `rankingWindow` pero filtrando `rows.filter(r => r.team_id === myTeamId)` y reordenando por puntos+email, luego calculando ventana de 5 alrededor del usuario (misma lógica que la existente para global). Esto se hace en el mismo `useEffect` ya presente.
-
-**Render de la lista (dentro de la card)**:
-- Si `rankView === "global"`: lista actual `rankingWindow` + agregar columna **equipo** (texto `text-xs text-muted-foreground truncate` con `r.team_name`, oculto en pantallas muy chicas con `hidden sm:inline`).
-- Si `rankView === "team"`: lista `teamRankingWindow` **sin** la columna equipo (es redundante).
-- En ambos: posición (#), avatar, nombre, puntos, `TrendBadge` (usando `current_rank`/`previous_rank` global o `team_current_rank`/`team_previous_rank` según el view).
-- Mantener resaltado del usuario actual (`isMe`).
-
-Footer: botón "Ver ranking" que linkea a `/ranking` (ya existe).
+### 6. `min-w-0` faltante en cadenas flex
+Varios contenedores flex padre no propagan `min-w-0`, lo que rompe `truncate` interno y permite que el texto empuje el ancho.
 
 ---
 
-### 3. Card B: Ranking Inter-Áreas (ventana del área del usuario)
+## Cambios propuestos
 
-Estructura idéntica a Card A pero con datos de `team_avatars` + `team_avatar_ranks`.
+### A. `src/App.css` — limpieza global
+Reemplazar todo el contenido por un archivo vacío (o solo con un comentario). Esto elimina:
+- `max-width: 1280px` en `#root` (deja que el layout de Tailwind controle el ancho).
+- `padding: 2rem` (el `<main>` ya tiene `p-4 md:p-6`).
+- `text-align: center` (rompe alineaciones).
+- Estilos `.logo`, `.card`, `.read-the-docs` no usados.
 
-**Carga de datos** (agregar al `Promise.all` del `useEffect` existente):
-```ts
-supabase
-  .from("team_avatars" as any)
-  .select("id, team_id, name, team_avatar_ranks(total_points, current_rank, previous_rank)")
-```
-Mapear igual que en `Ranking.tsx` (líneas 70–82) a un array `TeamAvatarRow[]` y guardarlo en estado.
+**Beneficio adicional:** soluciona también el problema previo de hero recortado en pantallas grandes.
 
-**Procesamiento**:
-- Ordenar por `total_points DESC`, `name ASC`.
-- Encontrar el índice del avatar cuyo `team_id === myTeamId`.
-- Calcular ventana de 5 (mismo algoritmo que `rankingWindow`: 2 antes / 2 después, ajustando bordes).
+### B. `src/pages/Index.tsx` — Card "Próximos partidos"
+Reestructurar cada `<li>` para que en mobile use **layout en 2 filas** (fila 1: fecha + equipos; fila 2: countdown + botón) y solo en `sm:` mantenga la fila única horizontal:
+- Cambiar `<li className="flex items-center gap-3 ...">` por `<li className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 ...">`.
+- Ocultar la fecha vieja `w-28` en mobile y mostrarla como prefijo del equipo (texto pequeño arriba).
+- El botón "Cargar resultados" / "Modificar" pasa a `w-full sm:w-auto` en mobile.
 
-**Render**:
-- Header: ícono `Building2` + título "Inter Áreas" + descripción tipo "Tu área entre las más cercanas".
-- Lista con: posición (#), ícono 🏢/`Building2` en círculo `bg-primary/15`, nombre del avatar (ej. "Equipo IT prom."), puntos, `TrendBadge`.
-- Resaltar la fila del área del usuario (`row.team_id === myTeamId`) con la misma clase que usa la fila "isMe" de Card A (`bg-primary/10 border-l-2 border-l-primary font-semibold`).
-- Si el usuario no tiene equipo: mostrar mensaje "No perteneces a un área" y listar el top 5 global de Inter-Áreas como fallback.
+### C. `src/pages/Index.tsx` — Hero stats
+- Cambiar `md:w-[200px]` por `md:w-[220px]` y agregar `min-w-0` al contenedor padre del hero grid.
+- En la lista de ranking interna, envolver el bloque de "pts + TrendBadge" para que pueda hacer wrap si no entra: `flex-wrap` en el contenedor `<span>` exterior.
 
-Footer: botón "Ver ranking" → `/ranking` (mismo destino; el usuario puede cambiar a Inter Áreas con el selector existente).
+### D. `src/pages/Prediccion.tsx` — Filas de partidos
+- Reducir `sm:w-40` a `sm:w-32` (128px) en los nombres de equipos.
+- Cambiar `sm:w-28` del status a `sm:w-auto` con `sm:min-w-[7rem]`.
+- Mantener layout de columna en mobile (ya está bien con `flex-col sm:flex-row`), pero asegurar `min-w-0` en el flex parent para que `truncate` funcione.
 
----
+### E. `src/pages/Ranking.tsx` — Tabla con scroll defensivo
+Envolver la `<Table>` en `<div className="overflow-x-auto -mx-6">` dentro de `CardContent` para permitir scroll lateral solo dentro de la tabla si hace falta, sin romper el resto de la página. Ajustar también el `max-w-[200px]` del nombre a `max-w-[140px] sm:max-w-none` para evitar overflow.
 
-### 4. Detalles de implementación
+### F. Hero — defensa de overflow
+Agregar `overflow-hidden` al wrapper exterior del hero en las 3 páginas (Index, Prediccion, Ranking) para contener cualquier elemento que se exceda visualmente sin romper el viewport.
 
-**Archivo a editar**: `src/pages/Index.tsx` únicamente.
-
-**Imports nuevos**:
-- `Switch` desde `@/components/ui/switch`
-- `Building2` desde `lucide-react`
-
-**Nuevos estados**:
-```ts
-const [rankView, setRankView] = useState<"global" | "team">("global");
-const [teamRankingWindow, setTeamRankingWindow] = useState<typeof rankingWindow>([]);
-const [interAreasWindow, setInterAreasWindow] = useState<Array<{
-  position: number; team_avatar_id: string; team_id: string; name: string;
-  total_points: number; current_rank: number | null; previous_rank: number | null;
-}>>([]);
-```
-
-**Default del switch**: cuando se carga el perfil, si `myTeamId` existe → `setRankView("team")`, sino dejar "global". Hacerlo dentro del `useEffect` de carga, después de setear `myTeamId`.
-
-**Sin cambios en**:
-- Base de datos (todo ya existe: `team_avatars`, `team_avatar_ranks`, vista `user_ranking`).
-- Otros archivos (`Ranking.tsx`, etc.).
-- Lógica de cálculo de puntos.
+### G. `src/components/AppLayout.tsx` — wrapper del main
+Agregar `overflow-x-hidden` al contenedor `<main>` o al `<div className="flex-1 flex flex-col min-w-0">` para garantizar que ningún hijo pueda forzar scroll horizontal de página completa.
 
 ---
 
-### Resumen visual final
+## Archivos a modificar
+- `src/App.css` (limpiar todo el contenido)
+- `src/components/AppLayout.tsx` (overflow-x-hidden + min-w-0)
+- `src/pages/Index.tsx` (lista de próximos partidos + hero stats)
+- `src/pages/Prediccion.tsx` (anchos de filas de partidos)
+- `src/pages/Ranking.tsx` (wrapper scroll en tabla + truncate names)
 
-```
-┌──────────────────────────────────────────────────────────┐
-│ [📊 Ranking]   🌐 Global  [●━━○]  ⭐ Mi Equipo          │
-│ Tu posición: #X de Y · Z pts                             │
-│ ─────────────────────────────────────────────────        │
-│ #3  👤 Juan      IT       120 pts  ▲                    │
-│ #4  👤 Vos       IT       110 pts  ─    ← resaltado    │
-│ #5  👤 Ana       IT       100 pts  ▼                    │
-│ [Ver ranking]                                            │
-└──────────────────────────────────────────────────────────┘
-┌──────────────────────────────────────────────────────────┐
-│ [🏢 Inter Áreas]                                         │
-│ Tu área entre las más cercanas                           │
-│ ─────────────────────────────────────────────────        │
-│ #2  🏢 Equipo Marketing prom.   85 pts  ▲               │
-│ #3  🏢 Equipo IT prom.          80 pts  ─  ← resaltado │
-│ #4  🏢 Equipo G&C prom.         75 pts  ▼               │
-│ [Ver ranking]                                            │
-└──────────────────────────────────────────────────────────┘
-```
-(En desktop, ambas cards se muestran lado a lado.)
+## QA esperado
+Verificar a 360px, 390px, 414px y 768px que:
+- No hay scroll horizontal de página.
+- Las cards ocupan el mismo ancho (no quedan más anchas que otras).
+- No quedan sectores vacíos a los costados.
+- El hero ocupa el ancho completo del viewport (sin caja 1280px).
+- Las tablas/listas internas pueden hacer scroll lateral solo si su contenido lo requiere, sin afectar la página.
