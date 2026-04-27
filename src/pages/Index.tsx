@@ -477,7 +477,7 @@ const Index = () => {
                 });
                 return (
                   <div className="mt-4">
-                    <div className="text-[11px] uppercase tracking-wide opacity-90 font-semibold mb-2 flex items-center gap-1.5">
+                    <div className="text-[11px] uppercase tracking-wide text-foreground/85 font-semibold mb-2 flex items-center gap-1.5 drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]">
                       <span>🎖️</span>
                       <span>Logros</span>
                     </div>
