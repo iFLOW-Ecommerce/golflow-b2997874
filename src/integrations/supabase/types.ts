@@ -375,6 +375,7 @@ export type Database = {
       }
     }
     Functions: {
+      admin_run_recalcs: { Args: { p_snapshot?: boolean }; Returns: undefined }
       calculate_prediction_points: {
         Args: {
           actual_away: number
