@@ -226,7 +226,7 @@ const Ranking = () => {
               {/* Global */}
               <div className="p-5 bg-gradient-to-br from-background to-secondary/30">
                 <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground font-medium">
-                  <span>🌐</span>
+                  <Globe className="h-3.5 w-3.5 text-primary" />
                   <span>Global</span>
                 </div>
                 {myGlobalPosition ? (
