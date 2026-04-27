@@ -147,6 +147,16 @@ const Index = () => {
     return () => clearInterval(id);
   }, []);
 
+  // Onboarding: mostrar reglas la primera vez
+  useEffect(() => {
+    if (!user || rulesAutoOpened) return;
+    const dismissed = localStorage.getItem(`prode_rules_dismissed_${user.id}`);
+    if (!dismissed) {
+      setRulesOpen(true);
+      setRulesAutoOpened(true);
+    }
+  }, [user, rulesAutoOpened]);
+
   const handleAutoPredict = async () => {
     if (!user) return;
     const pendientes = upcoming.filter(
