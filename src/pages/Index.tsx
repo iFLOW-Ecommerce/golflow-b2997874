@@ -419,7 +419,7 @@ const Index = () => {
             <HelpCircle className="h-3.5 w-3.5" />
             Reglas
           </button>
-          <div className="max-w-4xl mx-auto grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
+          <div className="max-w-4xl mx-auto grid gap-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
             <div className="min-w-0">
               <div className="flex items-center gap-3 mb-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-elegant">
