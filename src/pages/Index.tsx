@@ -519,7 +519,7 @@ const Index = () => {
                 {/* Team */}
                 <div className="rounded-xl bg-card/80 backdrop-blur p-3 border border-primary/30 shadow-card">
                   <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-primary font-medium">
-                    <span>⭐</span>
+                    <Star className="h-3 w-3" fill="currentColor" />
                     <span className="truncate">{myTeamName ?? "Sin equipo"}</span>
                   </div>
                   {myTeamId && myTeamPosition ? (
