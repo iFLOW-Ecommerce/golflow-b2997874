@@ -164,9 +164,12 @@ const Ranking = () => {
   const displayName = (row: RankingRow) => fmtName(row);
 
   const positionCell = (pos: number) => {
-    if (pos === 1) return <span className="text-xl" aria-label="Primero">🥇</span>;
-    if (pos === 2) return <span className="text-xl" aria-label="Segundo">🥈</span>;
-    if (pos === 3) return <span className="text-xl" aria-label="Tercero">🥉</span>;
+    if (pos === 1)
+      return <Trophy className="h-5 w-5 text-yellow-300" fill="currentColor" aria-label="Primero" />;
+    if (pos === 2)
+      return <Medal className="h-5 w-5 text-slate-300" fill="currentColor" aria-label="Segundo" />;
+    if (pos === 3)
+      return <Medal className="h-5 w-5 text-amber-600" fill="currentColor" aria-label="Tercero" />;
     return <span className="font-semibold">#{pos}</span>;
   };
 
