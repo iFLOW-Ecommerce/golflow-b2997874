@@ -407,44 +407,44 @@ const Index = () => {
       />
       <div className="max-w-4xl mx-auto space-y-6">
         <section
-          className="hero-stadium rounded-2xl p-6 md:p-10 text-primary-foreground shadow-elegant border border-border/40"
+          className="hero-stadium -mx-4 md:-mx-6 -mt-4 md:-mt-6 px-4 md:px-6 pt-32 md:pt-48 pb-8 md:pb-10 text-foreground"
           style={{ ["--hero-image" as any]: `url(${heroStadium})` }}
         >
-          <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
+          <div className="max-w-4xl mx-auto grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
             <div className="min-w-0">
               <div className="flex items-center justify-between gap-3 mb-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 backdrop-blur">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-elegant">
                     <Trophy className="h-5 w-5" />
                   </div>
-                  <span className="text-sm font-medium opacity-90">Mundial 2026</span>
+                  <span className="text-sm font-medium text-primary">Mundial 2026</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => setRulesOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur px-3 py-1.5 text-xs font-medium border border-white/20 transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 hover:bg-primary/25 backdrop-blur px-3 py-1.5 text-xs font-medium text-primary border border-primary/30 transition-colors"
                   title="Ver reglas del juego"
                 >
                   <HelpCircle className="h-3.5 w-3.5" />
                   Reglas
                 </button>
               </div>
-              <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">
+              <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2 text-foreground drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
                 Bienvenido al Prode Mundial 2026
               </h1>
-              <p className="text-base opacity-90">
+              <p className="text-base text-foreground/85 drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]">
                 {user ? `Hola, ${firstName(myProfile ?? { email: user.email ?? null })}.` : ""} Predecí los partidos y competí con tus amigos.
               </p>
               {user && upcoming.length > 0 && (() => {
                 const missing = upcoming.filter((m) => !predsByMatch[m.id]).length;
                 return (
-                  <p className="text-sm opacity-90 mt-2">
+                  <p className="text-sm text-foreground/85 mt-2 drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]">
                     {missing === 0 ? (
                       "🏖️ Estás al día con tus predicciones"
                     ) : (
                       <>
                         🎯 Te faltan{" "}
-                        <span className="font-bold bg-white/20 px-1.5 py-0.5 rounded-md text-primary-foreground">
+                        <span className="font-bold bg-primary/20 px-1.5 py-0.5 rounded-md text-primary border border-primary/30">
                           {missing} {missing === 1 ? "predicción" : "predicciones"}
                         </span>{" "}
                         para estar al día
@@ -456,12 +456,12 @@ const Index = () => {
               {user && (accuracy !== null || streak >= 0) && (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {accuracy !== null && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-white/15 backdrop-blur px-2.5 py-1 text-xs font-medium border border-white/20">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 backdrop-blur px-2.5 py-1 text-xs font-medium text-primary border border-primary/30">
                       🔍 Precisión {accuracy}%
                     </span>
                   )}
                   {accuracy !== null && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-white/15 backdrop-blur px-2.5 py-1 text-xs font-medium border border-white/20">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 backdrop-blur px-2.5 py-1 text-xs font-medium text-primary border border-primary/30">
                       Racha: {streak} {streakEmoji(streak)}
                     </span>
                   )}
