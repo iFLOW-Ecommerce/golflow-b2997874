@@ -108,3 +108,45 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  /* Hero with cinematic stadium background.
+     Image is set via inline style --hero-image on the .hero-stadium element. */
+  .hero-stadium {
+    position: relative;
+    isolation: isolate;
+    background-color: hsl(var(--background));
+    overflow: hidden;
+  }
+  .hero-stadium::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: var(--hero-image);
+    background-position: center top;
+    background-size: cover;
+    background-repeat: no-repeat;
+    opacity: 0.55;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .hero-stadium::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at top, hsl(var(--primary) / 0.18) 0%, transparent 55%),
+      linear-gradient(
+        to bottom,
+        hsl(var(--background) / 0) 0%,
+        hsl(var(--background) / 0.55) 55%,
+        hsl(var(--background) / 0.92) 100%
+      );
+    z-index: 1;
+    pointer-events: none;
+  }
+  .hero-stadium > * {
+    position: relative;
+    z-index: 2;
+  }
+}
