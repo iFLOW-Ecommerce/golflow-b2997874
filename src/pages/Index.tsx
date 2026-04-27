@@ -370,6 +370,9 @@ const Index = () => {
       }
     };
     load();
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   return (
