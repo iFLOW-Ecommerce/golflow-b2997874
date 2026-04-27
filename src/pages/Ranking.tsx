@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { BarChart3, Building2 } from "lucide-react";
+import { BarChart3, Building2, Globe, Star, Medal, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TrendBadge } from "@/lib/trend-badge";
 import { UserAvatar } from "@/lib/user-avatar";
