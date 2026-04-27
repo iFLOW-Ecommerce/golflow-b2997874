@@ -131,32 +131,32 @@ const Admin = () => {
       return;
     }
     setSaving(true);
-    // Snapshot current_rank -> previous_rank BEFORE any points/ranks change
-    await supabase.rpc("snapshot_user_ranks" as any);
-    await supabase.rpc("snapshot_team_ranks" as any);
-    await supabase.rpc("snapshot_team_avatar_ranks" as any);
-    let okCount = 0;
-    let errCount = 0;
-    for (const id of ids) {
-      const d = scoreDraft[id];
-      const home = d.home === "" ? null : parseInt(d.home, 10);
-      const away = d.away === "" ? null : parseInt(d.away, 10);
-      const isFinished = home !== null && away !== null;
-      const { error } = await supabase
-        .from("matches")
-        .update({ home_score: home, away_score: away, is_finished: isFinished })
-        .eq("id", id);
-      if (error) errCount++;
-      else okCount++;
-    }
+
+    // Updates en paralelo (independientes entre sí).
+    const results = await Promise.all(
+      ids.map((id) => {
+        const d = scoreDraft[id];
+        const home = d.home === "" ? null : parseInt(d.home, 10);
+        const away = d.away === "" ? null : parseInt(d.away, 10);
+        const isFinished = home !== null && away !== null;
+        return supabase
+          .from("matches")
+          .update({ home_score: home, away_score: away, is_finished: isFinished })
+          .eq("id", id);
+      }),
+    );
+    const okCount = results.filter((r) => !r.error).length;
+    const errCount = results.length - okCount;
+
     if (okCount > 0) {
-      // Recompute current_rank with the new points
-      await supabase.rpc("recalculate_user_ranks" as any);
-      await supabase.rpc("recalculate_team_ranks" as any);
-      await supabase.rpc("recalculate_achievements" as any);
-      await supabase.rpc("recalculate_team_avatar_points" as any);
-      await supabase.rpc("recalculate_team_avatar_ranks" as any);
+      // Wrapper admin que internamente hace snapshot + recálculos en orden correcto.
+      // Más rápido y seguro que llamar a las primitivas desde el cliente.
+      const { error: rpcError } = await supabase.rpc("admin_run_recalcs" as any, { p_snapshot: true });
+      if (rpcError) {
+        toast.error("Error recalculando puntos: " + rpcError.message);
+      }
     }
+
     setSaving(false);
     if (okCount > 0) {
       toast.success(`${okCount} resultado(s) guardado(s). Puntos y ranking recalculados.`);
@@ -171,19 +171,19 @@ const Admin = () => {
       return;
     }
     setSavingTeams(true);
-    let okCount = 0;
-    let errCount = 0;
-    for (const id of dirtyTeamIds) {
-      const d = teamDraft[id];
-      const home = d.home.trim() || "Por definir";
-      const away = d.away.trim() || "Por definir";
-      const { error } = await supabase
-        .from("matches")
-        .update({ home_team: home, away_team: away })
-        .eq("id", id);
-      if (error) errCount++;
-      else okCount++;
-    }
+    const results = await Promise.all(
+      dirtyTeamIds.map((id) => {
+        const d = teamDraft[id];
+        const home = d.home.trim() || "Por definir";
+        const away = d.away.trim() || "Por definir";
+        return supabase
+          .from("matches")
+          .update({ home_team: home, away_team: away })
+          .eq("id", id);
+      }),
+    );
+    const okCount = results.filter((r) => !r.error).length;
+    const errCount = results.length - okCount;
     setSavingTeams(false);
     if (okCount > 0) {
       toast.success(`${okCount} equipo(s) actualizado(s).`);
@@ -192,7 +192,7 @@ const Admin = () => {
     if (errCount > 0) toast.error(`${errCount} con error`);
   };
 
-  if (loading || isAdmin === null) {
+  if (loading || profileLoading) {
     return (
       <AppLayout>
         <div className="flex items-center justify-center py-20">
