@@ -14,6 +14,8 @@ import { Loader2, Save, ShieldAlert, Check } from "lucide-react";
 import { MultiplierBadge } from "@/lib/multiplier";
 import { TeamName } from "@/lib/country-flag";
 import { AdminPasswordResets } from "@/components/AdminPasswordResets";
+import { formatDate } from "@/lib/format";
+import { KO_STAGES } from "@/lib/constants";
 
 interface Match {
   id: string;
@@ -30,48 +32,14 @@ interface Match {
 type ScoreDraft = Record<string, { home: string; away: string }>;
 type TeamDraft = Record<string, { home: string; away: string }>;
 
-const KO_STAGES: { key: string; label: string }[] = [
-  { key: "round_of_32", label: "Dieciseisavos" },
-  { key: "round_of_16", label: "Octavos" },
-  { key: "quarterfinal", label: "Cuartos" },
-  { key: "semifinal", label: "Semifinales" },
-  { key: "third_place", label: "Tercer puesto" },
-  { key: "final", label: "Final" },
-];
-
-const formatDate = (iso: string) => {
-  try {
-    return new Date(iso).toLocaleString("es-AR", {
-      day: "2-digit",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    });
-  } catch {
-    return iso;
-  }
-};
-
 const Admin = () => {
-  const { user, loading } = useAuth();
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const { user, loading, isAdmin, profileLoading } = useAuth();
   const [matches, setMatches] = useState<Match[]>([]);
   const [scoreDraft, setScoreDraft] = useState<ScoreDraft>({});
   const [teamDraft, setTeamDraft] = useState<TeamDraft>({});
   const [loadingData, setLoadingData] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingTeams, setSavingTeams] = useState(false);
-
-  useEffect(() => {
-    if (!user) return;
-    supabase
-      .from("profiles")
-      .select("is_admin")
-      .eq("user_id", user.id)
-      .maybeSingle()
-      .then(({ data }) => setIsAdmin(!!data?.is_admin));
-  }, [user]);
 
   const loadMatches = async () => {
     const { data, error } = await supabase
