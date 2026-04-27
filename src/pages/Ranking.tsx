@@ -369,7 +369,7 @@ const Ranking = () => {
                   <TableRow>
                     <TableHead className="w-16">#</TableHead>
                     <TableHead>Usuario</TableHead>
-                    {isGlobal && <TableHead className="hidden sm:table-cell">Equipo</TableHead>}
+                    {isGlobal && <TableHead>Equipo</TableHead>}
                     <TableHead className="text-right">Puntos</TableHead>
                     <TableHead className="w-20 text-center">Tend.</TableHead>
                   </TableRow>
