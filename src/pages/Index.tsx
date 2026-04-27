@@ -403,11 +403,22 @@ const Index = () => {
         >
           <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
             <div className="min-w-0">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 backdrop-blur">
-                  <Trophy className="h-5 w-5" />
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 backdrop-blur">
+                    <Trophy className="h-5 w-5" />
+                  </div>
+                  <span className="text-sm font-medium opacity-90">Mundial 2026</span>
                 </div>
-                <span className="text-sm font-medium opacity-90">Mundial 2026</span>
+                <button
+                  type="button"
+                  onClick={() => setRulesOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur px-3 py-1.5 text-xs font-medium border border-white/20 transition-colors"
+                  title="Ver reglas del juego"
+                >
+                  <HelpCircle className="h-3.5 w-3.5" />
+                  Reglas
+                </button>
               </div>
               <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">
                 Bienvenido al Prode Mundial 2026
