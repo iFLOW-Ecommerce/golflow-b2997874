@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { Loader2, Save, ShieldAlert, Check } from "lucide-react";
 import { MultiplierBadge } from "@/lib/multiplier";
 import { TeamName } from "@/lib/country-flag";
+import { AdminPasswordResets } from "@/components/AdminPasswordResets";
 
 interface Match {
   id: string;
@@ -365,10 +366,12 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="grupos" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="grupos">Fase de grupos</TabsTrigger>
             <TabsTrigger value="eliminatorias">Eliminatorias</TabsTrigger>
+            <TabsTrigger value="usuarios">Usuarios</TabsTrigger>
           </TabsList>
+
 
           <TabsContent value="grupos" className="mt-4">
             <Card>
@@ -487,6 +490,10 @@ const Admin = () => {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="usuarios" className="mt-4">
+            <AdminPasswordResets />
           </TabsContent>
         </Tabs>
       </div>
