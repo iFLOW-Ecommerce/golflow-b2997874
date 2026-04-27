@@ -1,3 +1,5 @@
+import { Globe } from "lucide-react";
+
 const FLAG_MAP: Record<string, string> = {
   "Alemania": "de",
   "Arabia Saudí": "sa",
