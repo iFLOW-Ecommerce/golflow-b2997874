@@ -216,9 +216,10 @@ const Index = () => {
           .select("id, team_id, name, team_avatar_ranks(total_points, current_rank, previous_rank)"),
       ]);
 
+      if (cancelled) return;
+
       setAchievements(((achievementsRes.data ?? []) as unknown) as Achievement[]);
 
-      setMyProfile((profileRes.data as any) ?? null);
 
       const rows = ((ranking.data ?? []) as unknown) as Array<{ user_id: string; email: string | null; first_name: string | null; last_name: string | null; avatar_seed: string | null; team_id: string | null; team_name: string | null; total_points: number; current_rank: number | null; previous_rank: number | null; team_current_rank: number | null; team_previous_rank: number | null }>;
       setGlobalTotal(rows.length);
