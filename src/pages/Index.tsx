@@ -203,11 +203,6 @@ const Index = () => {
           .select("match_id, predicted_home_score, predicted_away_score, points_awarded")
           .eq("user_id", user.id),
         supabase
-          .from("profiles")
-          .select("first_name, last_name, email")
-          .eq("user_id", user.id)
-          .maybeSingle(),
-        supabase
           .from("matches")
           .select("id, match_date")
           .eq("is_finished", true)
