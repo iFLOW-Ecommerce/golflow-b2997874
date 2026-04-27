@@ -670,13 +670,13 @@ const Index = () => {
                       type="button"
                       onClick={() => setRankView("global")}
                       className={cn(
-                        "text-base transition-opacity",
+                        "transition-opacity text-primary",
                         rankView === "global" ? "opacity-100" : "opacity-40 hover:opacity-70"
                       )}
                       title="Ranking global"
                       aria-label="Ranking global"
                     >
-                      🌐
+                      <Globe className="h-4 w-4" />
                     </button>
                     <Switch
                       checked={rankView === "team"}
@@ -687,13 +687,13 @@ const Index = () => {
                       type="button"
                       onClick={() => setRankView("team")}
                       className={cn(
-                        "text-base transition-opacity",
+                        "transition-opacity text-primary",
                         rankView === "team" ? "opacity-100" : "opacity-40 hover:opacity-70"
                       )}
                       title={`Ranking de equipo${myTeamName ? `: ${myTeamName}` : ""}`}
                       aria-label="Ranking de equipo"
                     >
-                      ⭐
+                      <Star className="h-4 w-4" fill="currentColor" />
                     </button>
                   </div>
                 )}
