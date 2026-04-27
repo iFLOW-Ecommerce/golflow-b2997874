@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { TrendBadge } from "@/lib/trend-badge";
 import { UserAvatar } from "@/lib/user-avatar";
 import { displayName as fmtName } from "@/lib/display-name";
-import heroStadium from "@/assets/hero-stadium.webp";
+import heroStadium from "@/assets/hero-ranking.webp";
 
 interface RankingRow {
   user_id: string;
