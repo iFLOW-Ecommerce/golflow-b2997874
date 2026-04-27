@@ -204,7 +204,7 @@ const Admin = () => {
 
   if (!user) return <Navigate to="/auth" replace />;
 
-  if (isAdmin === false) {
+  if (!isAdmin) {
     return (
       <AppLayout>
         <Card className="max-w-md mx-auto mt-10">
