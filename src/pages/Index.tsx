@@ -529,6 +529,8 @@ const Index = () => {
           </div>
         </section>
 
+        <CountdownTicker>
+          {(now) => (
         <Card className="shadow-card">
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between gap-3">
