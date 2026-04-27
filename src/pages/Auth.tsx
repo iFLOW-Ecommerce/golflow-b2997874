@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { avatarUrl } from "@/lib/user-avatar";
 import { cn } from "@/lib/utils";
 import { RefreshCw } from "lucide-react";
+import { ForgotPasswordDialog } from "@/components/ForgotPasswordDialog";
 
 type Team = { id: string; name: string };
 
@@ -164,6 +165,9 @@ const Auth = () => {
                   <Button type="submit" variant="hero" className="w-full" disabled={submitting}>
                     {submitting ? "Ingresando..." : "Ingresar"}
                   </Button>
+                  <div className="flex justify-center pt-1">
+                    <ForgotPasswordDialog />
+                  </div>
                 </form>
               </TabsContent>
 
