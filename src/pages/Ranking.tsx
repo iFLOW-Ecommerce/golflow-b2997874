@@ -390,7 +390,7 @@ const Ranking = () => {
                           </div>
                         </TableCell>
                         {isGlobal && (
-                          <TableCell className="hidden sm:table-cell text-sm text-muted-foreground truncate max-w-[180px]">
+                          <TableCell className="text-sm text-muted-foreground truncate max-w-[120px] sm:max-w-[180px]">
                             {row.team_name ?? "—"}
                           </TableCell>
                         )}
