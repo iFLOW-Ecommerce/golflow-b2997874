@@ -176,9 +176,10 @@ const Index = () => {
 
   useEffect(() => {
     if (!user) return;
+    let cancelled = false;
     const load = async () => {
       const nowIso = new Date().toISOString();
-      const [ranking, upcomingRes, recentRes, predsRes, profileRes, finishedRes, achievementsRes, teamAvatarsRes] = await Promise.all([
+      const [ranking, upcomingRes, recentRes, predsRes, finishedRes, achievementsRes, teamAvatarsRes] = await Promise.all([
         supabase
           .from("user_ranking" as any)
           .select("user_id, email, first_name, last_name, avatar_seed, team_id, team_name, total_points, current_rank, previous_rank, team_current_rank, team_previous_rank")
