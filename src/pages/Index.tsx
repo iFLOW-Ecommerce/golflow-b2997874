@@ -92,13 +92,11 @@ const streakIcon = (n: number): LucideIcon => {
 };
 
 const Index = () => {
-  const { user } = useAuth();
+  const { user, profile: authProfile } = useAuth();
   const { toast } = useToast();
-  const [now, setNow] = useState<number>(Date.now());
   const [autoPredicting, setAutoPredicting] = useState(false);
   const [myPosition, setMyPosition] = useState<number | null>(null);
   const [myPoints, setMyPoints] = useState<number>(0);
-  const [myProfile, setMyProfile] = useState<{ first_name: string | null; last_name: string | null; email: string | null } | null>(null);
   const [globalTotal, setGlobalTotal] = useState<number>(0);
   const [myCurrentRank, setMyCurrentRank] = useState<number | null>(null);
   const [myPreviousRank, setMyPreviousRank] = useState<number | null>(null);
@@ -121,14 +119,13 @@ const Index = () => {
   const [streak, setStreak] = useState<number>(0);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
 
+  // myProfile equivalente al anterior, derivado del provider (ya cacheado).
+  const myProfile = authProfile
+    ? { first_name: authProfile.first_name, last_name: authProfile.last_name, email: authProfile.email }
+    : null;
+
   useEffect(() => {
     document.title = "Inicio | Prode Mundial 2026";
-  }, []);
-
-  // Tick para countdown en vivo
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
   }, []);
 
   // Onboarding: mostrar reglas la primera vez
