@@ -545,12 +545,14 @@ const Index = () => {
         <Card className="shadow-card">
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary mb-2">
+              <div className="min-w-0 flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary">
                   <CalendarClock className="h-5 w-5 text-primary" />
                 </div>
-                <CardTitle className="text-base">Próximos partidos</CardTitle>
-                <CardDescription>Lo que viene en breve.</CardDescription>
+                <div className="min-w-0">
+                  <CardTitle className="text-base">Próximos partidos</CardTitle>
+                  <CardDescription>Lo que viene en breve.</CardDescription>
+                </div>
               </div>
               {(() => {
                 const pendientes = upcoming.filter(
@@ -641,16 +643,18 @@ const Index = () => {
           <Card className="shadow-card">
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary mb-2">
+                <div className="min-w-0 flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary">
                     <BarChart3 className="h-5 w-5 text-primary" />
                   </div>
-                  <CardTitle className="text-base">Ranking</CardTitle>
-                  <CardDescription>
-                    {rankView === "global"
-                      ? (myPosition ? `Global: #${myPosition} de ${globalTotal} · ${myPoints} pts` : "Aún no tenés posición global.")
-                      : (myTeamPosition ? `Equipo ${myTeamName ?? ""}: #${myTeamPosition} de ${myTeamTotal} · ${myPoints} pts` : (myTeamId ? "Sin posición en equipo." : "Sin equipo asignado."))}
-                  </CardDescription>
+                  <div className="min-w-0">
+                    <CardTitle className="text-base">Ranking</CardTitle>
+                    <CardDescription>
+                      {rankView === "global"
+                        ? (myPosition ? `Global: #${myPosition} de ${globalTotal} · ${myPoints} pts` : "Aún no tenés posición global.")
+                        : (myTeamPosition ? `Equipo ${myTeamName ?? ""}: #${myTeamPosition} de ${myTeamTotal} · ${myPoints} pts` : (myTeamId ? "Sin posición en equipo." : "Sin equipo asignado."))}
+                    </CardDescription>
+                  </div>
                 </div>
                 {myTeamId && (
                   <div className="flex items-center gap-2 shrink-0 mt-1">
@@ -767,15 +771,19 @@ const Index = () => {
           {/* Card B — Ranking Inter-Áreas */}
           <Card className="shadow-card">
             <CardHeader className="pb-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary mb-2">
-                <Building2 className="h-5 w-5 text-primary" />
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary">
+                  <Building2 className="h-5 w-5 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <CardTitle className="text-base">Inter Áreas</CardTitle>
+                  <CardDescription>
+                    {myTeamId
+                      ? "Tu área entre las más cercanas."
+                      : "Top de áreas por promedio de puntos."}
+                  </CardDescription>
+                </div>
               </div>
-              <CardTitle className="text-base">Inter Áreas</CardTitle>
-              <CardDescription>
-                {myTeamId
-                  ? "Tu área entre las más cercanas."
-                  : "Top de áreas por promedio de puntos."}
-              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {interAreasWindow.length > 0 ? (
@@ -818,11 +826,15 @@ const Index = () => {
 
         <Card className="shadow-card">
           <CardHeader className="pb-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary mb-2">
-              <CalendarClock className="h-5 w-5 text-primary" />
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary">
+                <CalendarClock className="h-5 w-5 text-primary" />
+              </div>
+              <div className="min-w-0">
+                <CardTitle className="text-base">Últimos partidos</CardTitle>
+                <CardDescription>Lo que acaba de pasar.</CardDescription>
+              </div>
             </div>
-            <CardTitle className="text-base">Últimos partidos</CardTitle>
-            <CardDescription>Lo que acaba de pasar.</CardDescription>
           </CardHeader>
           <CardContent>
             {recent.length === 0 ? (
