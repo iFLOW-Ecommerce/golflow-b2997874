@@ -417,7 +417,7 @@ const Index = () => {
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-elegant">
                     <Trophy className="h-5 w-5" />
                   </div>
-                  <span className="text-sm font-medium text-primary">Mundial 2026</span>
+                  <span className="inline-flex items-center rounded-full bg-background/50 backdrop-blur px-2.5 py-0.5 text-xs font-semibold text-primary border border-primary/30">Mundial 2026</span>
                 </div>
                 <button
                   type="button"
@@ -429,25 +429,25 @@ const Index = () => {
                   Reglas
                 </button>
               </div>
-              <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2 text-foreground drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
+              <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-3 text-white [text-shadow:_0_2px_12px_rgba(0,0,0,0.85),_0_1px_2px_rgba(0,0,0,0.9)]">
                 Bienvenido al Prode Mundial 2026
               </h1>
-              <p className="text-base text-foreground/85 drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]">
+              <p className="inline-block rounded-lg bg-background/55 backdrop-blur-sm px-3 py-1.5 text-base text-white border border-white/10">
                 {user ? `Hola, ${firstName(myProfile ?? { email: user.email ?? null })}.` : ""} Predecí los partidos y competí con tus amigos.
               </p>
               {user && upcoming.length > 0 && (() => {
                 const missing = upcoming.filter((m) => !predsByMatch[m.id]).length;
                 return (
-                  <p className="text-sm text-foreground/85 mt-2 drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]">
+                  <p className="mt-2 inline-flex flex-wrap items-center gap-1.5 rounded-lg bg-background/55 backdrop-blur-sm px-3 py-1.5 text-sm text-white border border-white/10">
                     {missing === 0 ? (
-                      "🏖️ Estás al día con tus predicciones"
+                      <span>🏖️ Estás al día con tus predicciones</span>
                     ) : (
                       <>
-                        🎯 Te faltan{" "}
-                        <span className="font-bold bg-primary/20 px-1.5 py-0.5 rounded-md text-primary border border-primary/30">
+                        <span>🎯 Te faltan</span>
+                        <span className="font-bold bg-primary/25 px-1.5 py-0.5 rounded-md text-primary border border-primary/40">
                           {missing} {missing === 1 ? "predicción" : "predicciones"}
-                        </span>{" "}
-                        para estar al día
+                        </span>
+                        <span>para estar al día</span>
                       </>
                     )}
                   </p>
